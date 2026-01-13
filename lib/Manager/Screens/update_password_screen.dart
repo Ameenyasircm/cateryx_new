@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import '../Providers/ManagerProvider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
-  final String managerID; // Passed as /BOYS/BOY1767283893322
+  final String managerID,fromWhere; // Passed as /BOYS/BOY1767283893322
 
-  const ChangePasswordScreen({Key? key, required this.managerID}) : super(key: key);
+  const ChangePasswordScreen({super.key, required this.managerID,required this.fromWhere});
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
@@ -31,8 +31,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         await provider.updateBoyPassword(
             context,
             widget.managerID,
-            _passController.text.trim()
+            _passController.text.trim(),widget.fromWhere
         );
+
 
         if (mounted) Navigator.pop(context);
       } catch (e) {

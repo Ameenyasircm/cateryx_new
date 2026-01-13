@@ -6,7 +6,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 
 class MenuHeader extends StatelessWidget {
-  const MenuHeader({super.key});
+  final String boyName,boyID,boyPhone;
+  const MenuHeader({super.key,required this.boyName,required this.boyID,required this.boyPhone});
 
   @override
   Widget build(BuildContext context) {
@@ -16,21 +17,22 @@ class MenuHeader extends StatelessWidget {
         children: [
            CircleAvatar(
             radius: 30.r,
-            backgroundColor: grey2c,
+             backgroundColor: Colors.black12,
+             child: Icon(Icons.person, size: 26,color: blue7E,),
             // backgroundImage: AssetImage('assets/profile.jpg'),
           ),
           AppSpacing.w12,
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               Text(
-                'spine test boy onne',
+              Text(
+                boyName,
                 style: AppTypography.body1,
               ),
               AppSpacing.h4,
-               Text(
-                '9058001001',
-                 style: AppTypography.caption,
+              Text(
+                boyPhone,
+                style: AppTypography.caption,
               ),
             ],
           )

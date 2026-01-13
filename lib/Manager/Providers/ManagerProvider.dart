@@ -207,14 +207,21 @@ class ManagerProvider extends ChangeNotifier{
 
 
 
-  Future<void> updateBoyPassword(BuildContext context, String docId, String newPassword) async {
+  Future<void> updateBoyPassword(BuildContext context, String docId, String newPassword,String fromWhere) async {
     try {
+      String dbName='';
+      if(fromWhere=="boy"){
+        dbName="BOYS";
+      }else{
+        dbName="ADMINS";
+      }
 
-      await db.collection("ADMINS").doc(docId).set({
+      await db.collection(dbName).doc(docId).set({
         "PASSWORD": newPassword, // Stored as a string
         "PASSWORD_UPDATED_TIME": FieldValue.serverTimestamp()
       },SetOptions(merge: true));
-
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('password', newPassword);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

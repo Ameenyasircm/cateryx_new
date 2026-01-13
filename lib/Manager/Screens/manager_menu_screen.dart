@@ -114,7 +114,7 @@ class ManagerMenuScreen extends StatelessWidget {
                   subtitle: "Change password",
                   onTap: () {
                     callNext(
-                      ChangePasswordScreen(managerID: managerId),
+                      ChangePasswordScreen(managerID: managerId, fromWhere: 'manager',),
                       context,
                     );
                   },

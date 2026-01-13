@@ -34,7 +34,11 @@ class _BoyBottomNavBarState extends State<BoyBottomNavBar> {
         boyID: widget.boyID,
         boyPhone: widget.boyPhone,
       ),
-       MenuScreen(),
+       MenuScreen(
+         boyName: widget.boyName,
+         boyID: widget.boyID,
+         boyPhone: widget.boyPhone,
+       ),
     ];
   }
 

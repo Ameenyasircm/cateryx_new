@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../Constants/my_functions.dart';
 import '../../../Manager/Screens/LoginScreen.dart';
+import '../../../Manager/Screens/update_password_screen.dart';
 import '../../../core/theme/app_spacing.dart';
 import 'widgets/menu_header.dart';
 import 'widgets/menu_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MenuScreen extends StatelessWidget {
-   MenuScreen({super.key});
+  final String boyName,boyID,boyPhone;
+   const MenuScreen({super.key,required this.boyName,required this.boyID,required this.boyPhone});
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +23,23 @@ class MenuScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-           MenuHeader(),
+          MenuHeader(boyName: boyName, boyID:boyID, boyPhone: boyPhone,),
           AppSpacing.h12,
+          // MenuTile(
+          //   icon: Icons.person_outline,
+          //   title: 'Profile',
+          //   onTap: () {
+          //     // Navigator.push(...)
+          //   },
+          // ),
           MenuTile(
-            icon: Icons.person_outline,
-            title: 'Profile',
+            icon: Icons.lock_open_rounded,
+            title: 'Change password',
             onTap: () {
-              // Navigator.push(...)
+              callNext(
+                ChangePasswordScreen(managerID: boyID, fromWhere: 'boy',),
+                context,
+              );
             },
           ),
           MenuTile(

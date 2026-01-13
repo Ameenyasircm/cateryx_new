@@ -18,7 +18,8 @@ class ProfileHeader extends StatelessWidget {
         children: [
            CircleAvatar(
             radius: 26.r,
-              backgroundColor: grey2c,
+             backgroundColor: Colors.black12,
+             child: Icon(Icons.person, size: 26,color: blue7E,),
             // backgroundImage: AssetImage('assets/profile.jpg'),
           ),
           AppSpacing.w12,
