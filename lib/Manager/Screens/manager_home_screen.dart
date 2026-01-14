@@ -8,6 +8,7 @@ import '../../Constants/my_functions.dart';
 import '../Providers/ManagerProvider.dart';
 import 'create_new_event.dart';
 import 'event_detailed_screen.dart';
+import 'event_details_screen.dart';
 
 class ManagerHomeScreen extends StatelessWidget {
   const ManagerHomeScreen({Key? key}) : super(key: key);
@@ -111,8 +112,12 @@ class ManagerHomeScreen extends StatelessWidget {
                     final event = events[index];
                     return InkWell(
                       onTap: () {
+                        // callNext(
+                        //   EventDetailScreen(eventId: event.eventId),
+                        //   context,
+                        // );
                         callNext(
-                          EventDetailScreen(eventId: event.eventId),
+                          EventDetailedScreen(),
                           context,
                         );
                       },

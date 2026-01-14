@@ -9,6 +9,7 @@ import 'Boys/Screens/navbar/boy_bottomNav.dart';
 import 'Manager/Providers/EventDetailProvider.dart';
 import 'Manager/Providers/LoginProvider.dart';
 import 'Manager/Providers/ManagerProvider.dart';
+import 'Manager/Screens/event_details_screen.dart';
 import 'Manager/Screens/sample.dart';
 import 'Manager/Screens/splashScreen.dart';
 
@@ -137,6 +138,7 @@ class MyApp extends StatelessWidget {
               useMaterial3: true,
             ),
             home: const SplashScreen(),
+              // home: EventDetailedScreen()
           ),
         );
       },

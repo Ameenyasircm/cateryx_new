@@ -5,3 +5,5 @@ const clWhite= Colors.white;
  const grey2c = Color(0xFFC2C2C2);
  const blue7E = Color(0xff1A237E);
  const red22 = Color(0xffFF5722);
+final Color buttonColor = const Color(0xFF3B2A54);
+final Color bgColor = const Color(0xFFF5F5F5);
