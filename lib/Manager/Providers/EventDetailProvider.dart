@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../Boys/Models/ConfirmedBoyModel.dart';
 
 class EventDetailsProvider extends ChangeNotifier {
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -8,48 +11,6 @@ class EventDetailsProvider extends ChangeNotifier {
   Map<String, dynamic>? eventData;
   List<Map<String, dynamic>> confirmedBoys = [];
 
-  Future<void> fetchEventDetails(String eventId) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-
-      final eventDoc = await db.collection('EVENTS').doc(eventId).get();
-
-      if (!eventDoc.exists) {
-        eventData = null;
-        confirmedBoys = [];
-        return;
-      }
-
-      final data = eventDoc.data() ?? {};
-
-      // 🔐 Normalize data (VERY IMPORTANT)
-      eventData = {
-        'EVENT_NAME': data['EVENT_NAME'] ?? '',
-        'LOCATION_NAME': data['LOCATION_NAME'] ?? '',
-        'DESCRIPTION': data['DESCRIPTION'] ?? '',
-        'EVENT_DATE': data['EVENT_DATE'] ?? '',
-        'BOYS_TAKEN': data['BOYS_TAKEN'] ?? 0,
-        'BOYS_REQUIRED': data['BOYS_REQUIRED'] ?? 0,
-        'NOTES': List<String>.from(data['NOTES'] ?? []),
-      };
-
-      final boysSnap = await db
-          .collection('EVENTS')
-          .doc(eventId)
-          .collection('CONFIRMED_BOYS')
-          .orderBy('CONFIRMED_AT', descending: false)
-          .get();
-
-      confirmedBoys =
-          boysSnap.docs.map((e) => e.data()).toList();
-    } catch (e) {
-      debugPrint('Error fetching event details: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
 
   Future<void> addNote(String eventId, String note) async {
     try {
@@ -69,4 +30,57 @@ class EventDetailsProvider extends ChangeNotifier {
       debugPrint('Error adding note: $e');
     }
   }
+
+  Future<void> openGoogleMap(double latitude, double longitude) async {
+    if (latitude == 0 || longitude == 0) {
+      debugPrint("❌ Invalid coordinates");
+      return;
+    }
+
+    final Uri googleMapUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
+    );
+
+    try {
+      if (await canLaunchUrl(googleMapUri)) {
+        await launchUrl(
+          googleMapUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        debugPrint("❌ Could not launch Google Maps");
+      }
+    } catch (e) {
+      debugPrint("❌ Map launch error: $e");
+    }
+  }
+
+  List<ConfirmedBoyModel> confirmedBoysList = [];
+
+  Future<void> fetchConfirmedBoys(String eventId) async {
+    confirmedBoysList.clear();
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final snapshot = await db
+          .collection('EVENTS')
+          .doc(eventId)
+          .collection('CONFIRMED_BOYS')
+          .orderBy('CONFIRMED_AT', descending: false)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        confirmedBoysList.add(
+          ConfirmedBoyModel.fromMap(doc.data()),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Fetch confirmed boys error: $e');
+    }
+
+    isLoading = false;
+    notifyListeners();
+  }
+
 }

@@ -10,6 +10,7 @@ class EventModel {
   final double latitude;
   final double longitude;
   final int boysRequired;
+  final int boysTaken;
   final String description;
   final String eventStatus;
   final String status;
@@ -25,6 +26,7 @@ class EventModel {
     required this.latitude,
     required this.longitude,
     required this.boysRequired,
+    required this.boysTaken,
     required this.description,
     required this.eventStatus,
     required this.status,
@@ -42,6 +44,7 @@ class EventModel {
       latitude: (map['LATITUDE'] as num?)?.toDouble() ?? 0.0,
       longitude: (map['LONGITUDE'] as num?)?.toDouble() ?? 0.0,
       boysRequired: (map['BOYS_REQUIRED'] as num?)?.toInt() ?? 0,
+      boysTaken: (map['BOYS_TAKEN'] as num?)?.toInt() ?? 0,
       description: map['DESCRIPTION'] as String? ?? '',
       eventStatus: map['EVENT_STATUS'] as String? ?? '',
       status: map['STATUS'] as String? ?? '',
@@ -60,6 +63,7 @@ class EventModel {
       'LATITUDE': latitude,
       'LONGITUDE': longitude,
       'BOYS_REQUIRED': boysRequired,
+      'BOYS_TAKEN':boysTaken,
       'DESCRIPTION': description,
       'EVENT_STATUS': eventStatus,
       'STATUS': status,

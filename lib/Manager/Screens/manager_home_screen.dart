@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import '../../Boys/Providers/boys_provider.dart';
 import '../../Boys/Screens/boy_registration.dart';
 import '../../Constants/my_functions.dart';
+import '../Providers/EventDetailProvider.dart';
 import '../Providers/ManagerProvider.dart';
 import 'create_new_event.dart';
-import 'event_detailed_screen.dart';
 import 'event_details_screen.dart';
 
 class ManagerHomeScreen extends StatelessWidget {
@@ -17,6 +17,7 @@ class ManagerHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     ManagerProvider managerProvider = Provider.of<ManagerProvider>(context);
     BoysProvider boysProvider = Provider.of<BoysProvider>(context);
+    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -112,12 +113,8 @@ class ManagerHomeScreen extends StatelessWidget {
                     final event = events[index];
                     return InkWell(
                       onTap: () {
-                        // callNext(
-                        //   EventDetailScreen(eventId: event.eventId),
-                        //   context,
-                        // );
                         callNext(
-                          EventDetailedScreen(),
+                          EventDetailedScreen(event: event,),
                           context,
                         );
                       },
