@@ -83,4 +83,84 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> markAttendance({
+    required String eventId,
+    required ConfirmedBoyModel boy,
+    required String attendanceStatus,
+    required String updatedById,
+    required String updatedByName,
+  }) async {
+    final now = Timestamp.now();
+
+    await db
+        .collection('EVENTS')
+        .doc(eventId)
+        .collection('CONFIRMED_BOYS')
+        .doc(boy.boyId)
+        .update({
+      'ATTENDANCE_STATUS': attendanceStatus,
+      'ATTENDANCE_MARKED_AT': now,
+      'ATTENDANCE_MARKED_BY': updatedById,
+      'ATTENDANCE_MARKED_BY_NAME': updatedByName,
+    });
+
+    await db
+        .collection('BOYS')
+        .doc(boy.boyId)
+        .collection('CONFIRMED_WORKS')
+        .doc(eventId)
+        .update({
+      'ATTENDANCE_STATUS': attendanceStatus,
+      'ATTENDANCE_MARKED_AT': now,
+      'ATTENDANCE_MARKED_BY': updatedById,
+      'ATTENDANCE_MARKED_BY_NAME': updatedByName,
+    });
+
+    final index =
+    confirmedBoysList.indexWhere((e) => e.boyId == boy.boyId);
+
+    confirmedBoysList[index] = boy.copyWith(
+      attendanceStatus: attendanceStatus,
+      attendanceMarkedAt: now,
+    );
+
+    notifyListeners();
+  }
+
+  Future<void> saveBoyPayment({
+    required String eventId,
+    required String boyId,
+    required double amount,
+  }) async {
+    await db
+        .collection('EVENTS')
+        .doc(eventId)
+        .collection('CONFIRMED_BOYS')
+        .doc(boyId)
+        .update({
+      'PAYMENT_AMOUNT': amount,
+      'PAYMENT_UPDATED_AT': Timestamp.now(),
+    });
+
+    await db
+        .collection('BOYS')
+        .doc(boyId)
+        .collection('CONFIRMED_WORKS')
+        .doc(eventId)
+        .update({
+      'PAYMENT_AMOUNT': amount,
+      'PAYMENT_UPDATED_AT': Timestamp.now(),
+    });
+
+    final index =
+    confirmedBoysList.indexWhere((e) => e.boyId == boyId);
+
+    confirmedBoysList[index] =
+        confirmedBoysList[index].copyWith(paymentAmount: amount);
+
+    notifyListeners();
+  }
 }
+
+
+

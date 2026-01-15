@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 
 import '../../Constants/colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
+/// ✅ SUCCESS ALERT (Already used)
 Future<void> showSuccessAlert({
   required BuildContext context,
   required String title,
@@ -15,16 +15,22 @@ Future<void> showSuccessAlert({
     barrierDismissible: false,
     builder: (context) {
       return AlertDialog(
-        insetPadding: EdgeInsets.symmetric(horizontal: 30),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 30),
         backgroundColor: Colors.white,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset("assets/gif/success.gif",height: 180,width: 200,),
+            Image.asset(
+              "assets/gif/success.gif",
+              height: 180,
+              width: 200,
+            ),
             AppSpacing.h10,
-            Text(message,textAlign: TextAlign.center,
-              style: AppTypography.body2.copyWith(color: Colors.grey,
-            ),),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTypography.body2.copyWith(color: Colors.grey),
+            ),
           ],
         ),
         actions: [
@@ -39,9 +45,10 @@ Future<void> showSuccessAlert({
                     ),
                   ),
                   onPressed: () => Navigator.pop(context),
-                  child:  Text('Done',style: AppTypography.body1.copyWith(
-                    color: Colors.white
-                  )),
+                  child: Text(
+                    'Done',
+                    style: AppTypography.body1.copyWith(color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -51,3 +58,4 @@ Future<void> showSuccessAlert({
     },
   );
 }
+
