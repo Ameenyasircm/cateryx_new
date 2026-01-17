@@ -106,7 +106,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                         child: _primaryButton(
                           text: 'Boys (${event.boysTaken}/${event.boysRequired})',
                           onTap: () {
-                            callNext(EventAllBoys(eventId: event.eventId), context);
+                            callNext(EventAllBoys(eventId: event.eventId,eventDate: event.eventDate,eventLocation: event.locationName,), context);
                           },
                           trailing: const CircleAvatar(
                             radius: 14,
@@ -451,6 +451,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
   }
 
 }
+
 
 
 

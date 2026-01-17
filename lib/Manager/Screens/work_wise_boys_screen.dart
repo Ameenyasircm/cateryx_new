@@ -4,17 +4,19 @@ import 'package:url_launcher/url_launcher.dart';
 import '../Providers/EventDetailProvider.dart';
 
 class EventAllBoys extends StatelessWidget {
-  final String eventId;
+  final String eventId,eventLocation,eventDate;
 
-  const EventAllBoys({super.key, required this.eventId});
+  const EventAllBoys({super.key
+    ,required this.eventId
+    ,required this.eventLocation
+    ,required this.eventDate
+  });
 
-  // 📞 CALL
   void _callNumber(String phone) async {
     final Uri url = Uri(scheme: "tel", path: phone);
     await launchUrl(url);
   }
 
-  // 💬 WHATSAPP MESSAGE
   void _openWhatsApp(String phone) async {
     final Uri url = Uri.parse("https://wa.me/$phone");
     await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -22,10 +24,18 @@ class EventAllBoys extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
     return Scaffold(
       backgroundColor: const Color(0xffF6F7FB),
       appBar: AppBar(
-        title: const Text('Confirmed Boys'),
+        title:  Text('Event Details'),
+        actions: [
+          InkWell(
+              onTap: (){
+                eventDetailsProvider.copyEventDetails(eventLocation,eventDate,context);
+              },
+              child: Icon(Icons.copy))
+        ],
         backgroundColor: Colors.white,
         elevation: 0,
         foregroundColor: Colors.black,
@@ -37,89 +47,105 @@ class EventAllBoys extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.confirmedBoysList.isEmpty) {
-            return const Center(child: Text('No boys assigned'));
-          }
-
-          return ListView.builder(
+          return ListView(
             padding: const EdgeInsets.all(12),
-            itemCount: provider.confirmedBoysList.length,
-            itemBuilder: (context, index) {
-              final boy = provider.confirmedBoysList[index];
+            children: [
+              // EVENT INFORMATION TOP SECTION
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _infoRow("SITE :", eventLocation),
+                  _infoRow("WORK DATE :", eventDate),
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                  const SizedBox(height: 15),
+                  const Divider(),
+                  const SizedBox(height: 15),
+
+                  const Text(
+                    "Confirmed Boys",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+
+              // 🔽 BOYS LIST
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: provider.confirmedBoysList.length,
+                itemBuilder: (context, index) {
+                  final boy = provider.confirmedBoysList[index];
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-
-                child: Row(
-                  children: [
-                    // Avatar
-                    const CircleAvatar(
-                      radius: 26,
-                      child: Icon(Icons.person, size: 28),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Name + Phone
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            boy.boyName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 17,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            boy.boyPhone,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // ACTION BUTTONS
-                    Row(
+                    child: Row(
                       children: [
-                        // 📞 Call
+                        const CircleAvatar(
+                          radius: 26,
+                          child: Icon(Icons.person, size: 28),
+                        ),
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Text(
+                            "${index + 1}. ${boy.boyName} - ${boy.boyPhone}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
                         IconButton(
                           onPressed: () => _callNumber(boy.boyPhone),
                           icon: const Icon(Icons.call, color: Colors.green),
                         ),
-
-                        // 💬 WhatsApp
                         IconButton(
                           onPressed: () => _openWhatsApp(boy.boyPhone),
-                          icon:  Image.asset('assets/whsp.png', color: Colors.teal,
-                          scale: 8,),
+                          icon: Image.asset('assets/whsp.png',
+                              color: Colors.teal, scale: 8),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ],
           );
         },
       ),
     );
   }
+}
+
+Widget _infoRow(String title, String value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 130,
+          child: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 15))),
+      ],
+    ),
+  );
 }

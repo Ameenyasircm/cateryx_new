@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
@@ -177,6 +178,28 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void copyEventDetails(String location,String date, BuildContext context) {
+
+    StringBuffer text = StringBuffer();
+
+    text.writeln("SITE         : ${location}");
+    text.writeln("WORK DATE    : ${date}");
+    text.writeln("");
+    text.writeln("Confirmed Boys");
+    text.writeln("");
+
+    for (int i = 0; i < confirmedBoysList.length; i++) {
+      final b = confirmedBoysList[i];
+      text.writeln("${i + 1}. ${b.boyName} - ${b.boyPhone}");
+    }
+
+    // Copy to clipboard
+    Clipboard.setData(ClipboardData(text: text.toString()));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Copied to Clipboard")),
+    );
+  }
 
 }
 
