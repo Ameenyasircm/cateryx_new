@@ -125,7 +125,7 @@ class ManagerProvider extends ChangeNotifier{
         /// 👇 BOTH FORMATS
         "EVENT_DATE": dateController.text.trim(),
         "EVENT_DATE_TS": Timestamp.fromDate(eventDateTime!),
-
+        'WORK_ACTIVE_STATUS':'ACTIVE',
         "MEAL_TYPE": selectedMeal,
         "LOCATION_NAME": locationController.text.trim(),
         "LATITUDE": latitude,

@@ -160,6 +160,24 @@ class EventDetailsProvider extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  Future<void> updateWorkActiveStatus({
+    required String eventId,
+    required bool isActive,
+  }) async {
+    final status = isActive ? "ACTIVE" : "DEACTIVE";
+
+    await db
+        .collection('EVENTS')
+        .doc(eventId)
+        .update({
+      'WORK_ACTIVE_STATUS': status,
+    });
+
+    notifyListeners();
+  }
+
+
 }
 
 

@@ -155,62 +155,67 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                     AppSpacing.h20,
 
                     /// Work Status
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: _cardDecoration(color: Colors.grey.shade300),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Work Status',
-                                  style: AppTypography.body1.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                AppSpacing.h4,
-                                Text(
-                                  event.eventStatus,
-                                  style: AppTypography.caption.copyWith(
-                                    color: event.eventStatus == 'UPCOMING'
-                                        ? Colors.orange
-                                        : Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: _cardDecoration(color: Colors.grey.shade300),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isWorkAllowed ? 'Active' : 'Inactive',
+                                'Work Status',
                                 style: AppTypography.body1.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: isWorkAllowed ? Colors.green : Colors.grey,
                                 ),
                               ),
-                              AppSpacing.w4,
-                              Transform.scale(
-                                scale: 0.9,
-                                child: Switch(
-                                  value: isWorkAllowed,
-                                  inactiveTrackColor: Colors.grey.shade400,
-                                  activeColor: Colors.green,
-                                  onChanged: (v) {
-                                    setState(() => isWorkAllowed = v);
-                                  },
+                              AppSpacing.h4,
+                              Text(
+                                isWorkAllowed ? 'ACTIVE' : 'DEACTIVE',
+                                style: AppTypography.caption.copyWith(
+                                  color: isWorkAllowed ? Colors.green : Colors.red,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isWorkAllowed ? 'Active' : 'Inactive',
+                              style: AppTypography.body1.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: isWorkAllowed ? Colors.green : Colors.grey,
+                              ),
+                            ),
+                            AppSpacing.w4,
+                            Transform.scale(
+                              scale: 0.9,
+                              child: Switch(
+                                value: isWorkAllowed,
+                                inactiveTrackColor: Colors.grey.shade400,
+                                activeColor: Colors.green,
+                                onChanged: (v) async {
+                                  setState(() => isWorkAllowed = v);
+
+                                  await context
+                                      .read<EventDetailsProvider>()
+                                      .updateWorkActiveStatus(
+                                    eventId: event.eventId,
+                                    isActive: v,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
 
                     AppSpacing.h20,
 
