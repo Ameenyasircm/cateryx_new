@@ -10,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../../Constants/colors.dart';
 import '../Models/event_model.dart';
+import 'attendence_screen.dart';
+import 'event_payment_screen.dart';
 
 class EventDetailedScreen extends StatefulWidget {
   final EventModel event;
@@ -98,34 +100,34 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                     AppSpacing.h10,
 
                     /// Buttons Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _primaryButton(
-                            text: 'Boys (${event.boysTaken}/${event.boysRequired})',
-                            onTap: () {
-                              eventDetailsProvider.fetchConfirmedBoys(event.eventId);
-                              callNext(
-                                EventAllBoys(eventId: event.eventId),
-                                context,
-                              );
-                            },
-                            trailing: const CircleAvatar(
-                              radius: 14,
-                              backgroundColor: Colors.deepOrange,
-                              child: Icon(Icons.add, size: 16, color: Colors.white),
-                            ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _primaryButton(
+                          text: 'Boys (${event.boysTaken}/${event.boysRequired})',
+                          onTap: () {
+                            callNext(EventAllBoys(eventId: event.eventId), context);
+                          },
+                          trailing: const CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.deepOrange,
+                            child: Icon(Icons.add, size: 16, color: Colors.white),
                           ),
                         ),
-                        // AppSpacing.w10,
-                        // Expanded(
-                        //   child: _primaryButton(
-                        //     text: 'Make Payment',
-                        //     onTap: () {},
-                        //   ),
-                        // ),
-                      ],
-                    ),
+                      ),
+
+                      AppSpacing.w10,
+
+                      Expanded(
+                        child: _primaryButton(
+                          text: 'Make Payment',
+                          onTap: () {
+                            callNext(EventPaymentScreen(eventId: event.eventId), context);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
 
                     AppSpacing.h10,
 
@@ -138,13 +140,15 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                             onTap: () {},
                           ),
                         ),
-                        // AppSpacing.w10,
-                        // Expanded(
-                        //   child: _primaryButton(
-                        //     text: 'Attendance',
-                        //     onTap: () {},
-                        //   ),
-                        // ),
+                        AppSpacing.w10,
+                        Expanded(
+                          child: _primaryButton(
+                            text: 'Attendance',
+                            onTap: () {
+                              callNext(EventAttendanceScreen(eventId: event.eventId), context);
+                            },
+                          ),
+                        ),
                       ],
                     ),
 
@@ -229,7 +233,8 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                     AppSpacing.h20,
 
                     /// Event Details
-                    _sectionTitle('Event Details'),
+                    _sectionTitle(''
+                        'Event Details'),
                     _detailCard(children: [
                       _detailRow('Description', event.description),
                       _divider(),
