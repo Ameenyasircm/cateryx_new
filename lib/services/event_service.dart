@@ -130,6 +130,7 @@ class EventService {
       // 5️⃣ EVENTS → CONFIRMED_BOYS
       transaction.set(confirmedBoyRef, {
         ...data,
+        'ATTENDANCE_STATUS':'PENDING',
         'BOY_ID': boyId,
         'BOY_NAME': boyName,
         'BOY_PHONE': boyPhone,
@@ -140,6 +141,7 @@ class EventService {
       // 6️⃣ BOYS → CONFIRMED_WORKS
       transaction.set(boyWorkRef, {
         ...data,
+        'ATTENDANCE_STATUS':'PENDING',
         'EVENT_ID': eventId,
         'BOY_ID': boyId,
         'BOY_NAME': boyName,

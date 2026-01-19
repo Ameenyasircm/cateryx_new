@@ -10,9 +10,11 @@ class EventModel {
   final double latitude;
   final double longitude;
   final int boysRequired;
+  final int boysTaken;
   final String description;
   final String eventStatus;
   final String status;
+  final String onOffStatus;
   final Timestamp? createdTime;
 
   EventModel({
@@ -25,9 +27,11 @@ class EventModel {
     required this.latitude,
     required this.longitude,
     required this.boysRequired,
+    required this.boysTaken,
     required this.description,
     required this.eventStatus,
     required this.status,
+    required this.onOffStatus,
     this.createdTime,
   });
 
@@ -42,9 +46,11 @@ class EventModel {
       latitude: (map['LATITUDE'] as num?)?.toDouble() ?? 0.0,
       longitude: (map['LONGITUDE'] as num?)?.toDouble() ?? 0.0,
       boysRequired: (map['BOYS_REQUIRED'] as num?)?.toInt() ?? 0,
+      boysTaken: (map['BOYS_TAKEN'] as num?)?.toInt() ?? 0,
       description: map['DESCRIPTION'] as String? ?? '',
       eventStatus: map['EVENT_STATUS'] as String? ?? '',
       status: map['STATUS'] as String? ?? '',
+      onOffStatus: map['WORK_ACTIVE_STATUS'] as String? ?? '',
       createdTime: map['CREATED_TIME'] as Timestamp?,
     );
   }
@@ -60,9 +66,11 @@ class EventModel {
       'LATITUDE': latitude,
       'LONGITUDE': longitude,
       'BOYS_REQUIRED': boysRequired,
+      'BOYS_TAKEN':boysTaken,
       'DESCRIPTION': description,
       'EVENT_STATUS': eventStatus,
       'STATUS': status,
+      'WORK_ACTIVE_STATUS':onOffStatus,
       'CREATED_TIME': createdTime ?? FieldValue.serverTimestamp(),
     };
   }

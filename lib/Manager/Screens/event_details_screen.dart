@@ -1,12 +1,22 @@
+import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
+import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
+import 'package:cateryyx/Manager/Screens/work_wise_boys_screen.dart';
 import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:cateryyx/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../Constants/colors.dart';
+import '../Models/event_model.dart';
+import 'attendence_screen.dart';
+import 'event_payment_screen.dart';
 
 class EventDetailedScreen extends StatefulWidget {
-  const EventDetailedScreen({super.key});
+  final EventModel event;
+
+  const EventDetailedScreen({super.key, required this.event});
 
   @override
   State<EventDetailedScreen> createState() => _EventDetailedScreenState();
@@ -17,6 +27,8 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final event = widget.event;
+    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
@@ -24,6 +36,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               /// ---------------- Header ----------------
               Container(
                 color: buttonColor,
@@ -46,22 +59,32 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           ),
                         ),
                         AppSpacing.w16,
-                        Text(
-                          'Event Details',
-                          style: AppTypography.subtitle.copyWith(color: clWhite),
+                        Expanded(
+                          child: Text(
+                            event.eventName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.subtitle.copyWith(color: clWhite),
+                          ),
                         )
                       ],
                     ),
                     AppSpacing.h20,
+
+                    /// Event Date
                     _infoTile(
                       icon: Icons.calendar_month,
-                      text: '12/01/2026 - 14/01/2026',
+                      text: event.eventDate,
                     ),
+
                     AppSpacing.h10,
+
+                    /// Location
                     _infoTile(
                       icon: Icons.location_on_outlined,
-                      text: 'Malappuram Raouse launch Auditorium',
+                      text: event.locationName,
                     ),
+
                     AppSpacing.h20,
                   ],
                 ),
@@ -73,31 +96,38 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     AppSpacing.h10,
 
                     /// Buttons Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _primaryButton(
-                            text: 'Boys (26/56)',
-                            onTap: () {},
-                            trailing: const CircleAvatar(
-                              radius: 14,
-                              backgroundColor: Colors.deepOrange,
-                              child: Icon(Icons.add, size: 16, color: Colors.white),
-                            ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _primaryButton(
+                          text: 'Boys (${event.boysTaken}/${event.boysRequired})',
+                          onTap: () {
+                            callNext(EventAllBoys(eventId: event.eventId,eventDate: event.eventDate,eventLocation: event.locationName,), context);
+                          },
+                          trailing: const CircleAvatar(
+                            radius: 14,
+                            backgroundColor: Colors.deepOrange,
+                            child: Icon(Icons.add, size: 16, color: Colors.white),
                           ),
                         ),
-                        AppSpacing.w10,
-                        Expanded(
-                          child: _primaryButton(
-                            text: 'Make Payment',
-                            onTap: () {},
-                          ),
+                      ),
+
+                      AppSpacing.w10,
+
+                      Expanded(
+                        child: _primaryButton(
+                          text: 'Make Payment',
+                          onTap: () {
+                            callNext(EventPaymentScreen(eventId: event.eventId), context);
+                          },
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
 
                     AppSpacing.h10,
 
@@ -114,7 +144,9 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                         Expanded(
                           child: _primaryButton(
                             text: 'Attendance',
-                            onTap: () {},
+                            onTap: () {
+                              callNext(EventAttendanceScreen(eventId: event.eventId), context);
+                            },
                           ),
                         ),
                       ],
@@ -127,10 +159,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: _cardDecoration(color: Colors.grey.shade300),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        /// Left content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,39 +170,44 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              AppSpacing.h4, // ✅ fixed (vertical spacing)
+                              AppSpacing.h4,
                               Text(
-                                'This event allows boys to get work',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.caption.copyWith(color: Colors.red),
+                                isWorkAllowed ? 'ACTIVE' : 'DEACTIVE',
+                                style: AppTypography.caption.copyWith(
+                                  color: isWorkAllowed ? Colors.green : Colors.red,
+                                ),
                               ),
                             ],
                           ),
                         ),
 
-                        AppSpacing.w10,
-
-                        /// Right switch + status
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               isWorkAllowed ? 'Active' : 'Inactive',
                               style: AppTypography.body1.copyWith(
-                                fontWeight: FontWeight.w600,fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                                 color: isWorkAllowed ? Colors.green : Colors.grey,
                               ),
                             ),
                             AppSpacing.w4,
                             Transform.scale(
-                              scale: 0.9, // ✅ cleaner in production
+                              scale: 0.9,
                               child: Switch(
                                 value: isWorkAllowed,
                                 inactiveTrackColor: Colors.grey.shade400,
                                 activeColor: Colors.green,
-                                onChanged: (v) {
+                                onChanged: (v) async {
                                   setState(() => isWorkAllowed = v);
+
+                                  await context
+                                      .read<EventDetailsProvider>()
+                                      .updateWorkActiveStatus(
+                                    eventId: event.eventId,
+                                    isActive: v,
+                                  );
                                 },
                               ),
                             ),
@@ -183,38 +217,35 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                     ),
                   ),
 
-                  AppSpacing.h20,
+                    AppSpacing.h20,
 
+                    /// Event Location
                     _sectionTitle('Event Location'),
                     _detailCard(children: [
-                      _detailRow('Venue Name', 'TKM Auditorium'),
+                      _detailRow('Location', event.locationName),
                       _divider(),
-                      _detailRow(
-                        'Address',
-                        'Malabar Convention Centre, Mini Bypass Road,\nKottooli, Kozhikode',
-                      ),
+                      _detailRow('Meal Type', event.mealType),
                       _divider(),
-                      _detailRow('Start Time', '11:00 am'),
+                      _detailRow('Event Date', event.eventDate),
                     ]),
 
                     AppSpacing.h20,
 
+                    /// Google Map
                     _sectionTitle('Google Map Location'),
-                    _mapBox(),
+                    _mapBox(event.latitude, event.longitude,context),
 
                     AppSpacing.h20,
 
-                    _sectionTitle('Client Details'),
+                    /// Event Details
+                    _sectionTitle(''
+                        'Event Details'),
                     _detailCard(children: [
-                      _detailRow('Client Name', 'Jhone'),
+                      _detailRow('Description', event.description),
                       _divider(),
-                      _contactRow('Contact Number', '5656245987'),
+                      _detailRow('Boys Required', event.boysRequired.toString()),
                       _divider(),
-                      _contactRow('Alternate Contact', '5656245987'),
-                      _divider(),
-                      _detailRow('Boys Required', '56'),
-                      _divider(),
-                      _contactRow('Captain', 'Al Wariz P kamarudheen'),
+                      _detailRow('Status', event.status),
                     ]),
 
                     AppSpacing.h20,
@@ -250,64 +281,57 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
     );
   }
 
-  Widget _primaryButton({
-    required String text,
-    required VoidCallback onTap,
-    Widget? trailing,
-  }) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        SizedBox(
-          height: 42,
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+  Widget _mapBox(double lat, double lng,BuildContext context) {
+    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: _cardDecoration(color: Colors.grey.shade300),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  lat == 0 && lng == 0
+                      ? 'Location not available'
+                      : 'Lat: $lat , Lng: $lng',
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            child: Text(
-              text,
-              style: AppTypography.body2.copyWith(
-                color: clWhite,
-                fontWeight: FontWeight.w500,
-                fontSize: 13.sp,
-              ),
+              const Icon(Icons.open_in_new, color: Colors.blue),
+            ],
+          ),
+          AppSpacing.h10,
+          OutlinedButton.icon(
+            onPressed: lat == 0 && lng == 0 ? null : () {
+              eventDetailsProvider.openGoogleMap(lat, lng);
+            },
+            icon: const Icon(Icons.location_on_outlined, color: Colors.blueAccent),
+            label: Text(
+              'Open Google Map',
+              style: AppTypography.body1.copyWith(color: Colors.blueAccent),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Divider _divider() => const Divider(thickness: 0.4);
+
+  BoxDecoration _cardDecoration({Color color = Colors.white12}) {
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 5,
         ),
-        if (trailing != null)
-          Positioned(
-            right: -6,
-            top: -6,
-            child: trailing,
-          ),
       ],
     );
   }
 
-  Widget _outlineButton({
-    required String text,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return SizedBox(
-      height: 42,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon),
-        label: Text(text),
-        style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _sectionTitle(String title) {
     return Padding(
@@ -350,77 +374,84 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
     );
   }
 
-  Widget _contactRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: AppTypography.caption.copyWith(color: Colors.grey),
-            ),
-          ),
-          Expanded(child: Text(value, style: AppTypography.caption)),
-          const Icon(Icons.call, color: Colors.blue, size: 20),
-          AppSpacing.w6,
-          Image.asset(
-            "assets/whatsapp.png",
-            width: 24.w,
-            height: 30.h,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _mapBox() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(color: Colors.grey.shade300),
-      child: Column(
-        children: [
-          Row(
-            children: const [
-              Expanded(
-                child: Text(
-                  'https://maps.app.goo.gl/asw1vwnp...',
-                  overflow: TextOverflow.ellipsis,
-                ),
+  Widget _primaryButton({
+    required String text,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        SizedBox(
+          height: 42,
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: onTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
               ),
-              Icon(Icons.open_in_new, color: Colors.blue),
-            ],
-          ),
-          AppSpacing.h10,
-          OutlinedButton.icon(
-            style:OutlinedButton.styleFrom(
-              side: BorderSide(color:Colors.blueAccent )
             ),
-            onPressed: () {},
-            icon: const Icon(Icons.location_on_outlined, color: Colors.blueAccent),
-            label: Text(
-              'Open Google Map',
-              style: AppTypography.body1.copyWith(color: Colors.blueAccent),
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: AppTypography.body2.copyWith(
+                color: clWhite,
+                fontWeight: FontWeight.w500,
+                fontSize: 13.sp,
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Divider _divider() => const Divider(thickness: 0.4);
-
-  BoxDecoration _cardDecoration({Color color = Colors.white12}) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 5,
         ),
+
+        /// 🔹 Trailing widget (ex: + icon)
+        if (trailing != null)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: trailing,
+          ),
       ],
     );
   }
+
+  Widget _outlineButton({
+    required String text,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      height: 42,
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          size: 18,
+          color: buttonColor,
+        ),
+        label: Text(
+          text,
+          style: AppTypography.body2.copyWith(
+            color: buttonColor,
+            fontWeight: FontWeight.w500,
+            fontSize: 13.sp,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: buttonColor, width: 1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+      ),
+    );
+  }
+
 }
+
+
+
+
