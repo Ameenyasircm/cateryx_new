@@ -138,6 +138,52 @@ class RegisterBoyScreen extends StatelessWidget {
                     maxLines: 3,
                   ),
 
+                  const SizedBox(height: 15),
+                  _label("New Password"),
+                  TextFormField(
+                    controller: provider.passwordController,
+                    obscureText: provider.obscurePassword,
+                    decoration: _decoration("Enter new password", Icons.lock).copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          provider.obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          color: const Color(0xff1A237E),
+                        ),
+                        onPressed: provider.togglePasswordVisibility,
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return "Password required";
+                      if (v.length < 6) return "Minimum 6 characters required";
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 15),
+                  _label("Confirm Password"),
+                  TextFormField(
+                    controller: provider.confirmPasswordController,
+                    obscureText: provider.obscureConfirmPassword,
+                    decoration: _decoration("Confirm password", Icons.lock_outline).copyWith(
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          provider.obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: const Color(0xff1A237E),
+                        ),
+                        onPressed: provider.toggleConfirmPasswordVisibility,
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return "Confirm your password";
+                      if (v != provider.passwordController.text) {
+                        return "Passwords do not match";
+                      }
+                      return null;
+                    },
+                  ),
+
                   const SizedBox(height: 30),
 
                   SizedBox(

@@ -21,7 +21,18 @@ class BoysProvider extends ChangeNotifier{
   TextEditingController addressController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
+  bool obscurePassword = true;
+  bool obscureConfirmPassword = true;
 
+  void togglePasswordVisibility() {
+    obscurePassword = !obscurePassword;
+    notifyListeners();
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    obscureConfirmPassword = !obscureConfirmPassword;
+    notifyListeners();
+  }
   String? selectedBloodGroup;
   DateTime? dobDateTime;
 
