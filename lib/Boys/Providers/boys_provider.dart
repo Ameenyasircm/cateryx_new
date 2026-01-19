@@ -19,6 +19,8 @@ class BoysProvider extends ChangeNotifier{
   TextEditingController districtController = TextEditingController();
   TextEditingController pinController = TextEditingController();
   TextEditingController addressController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmPasswordController = TextEditingController();
 
   String? selectedBloodGroup;
   DateTime? dobDateTime;
@@ -96,6 +98,7 @@ class BoysProvider extends ChangeNotifier{
         "DISTRICT": districtController.text.trim(),
         "PIN_CODE": pinController.text.trim(),
         "ADDRESS": addressController.text.trim(),
+        "PASSWORD": confirmPasswordController.text.trim(),
         "CREATED_TIME": FieldValue.serverTimestamp(),
       };
 
@@ -199,6 +202,8 @@ class BoysProvider extends ChangeNotifier{
     districtController.clear();
     pinController.clear();
     addressController.clear();
+    passwordController.clear();
+    confirmPasswordController.clear();
 
     selectedBloodGroup = null;
     dobDateTime = null;

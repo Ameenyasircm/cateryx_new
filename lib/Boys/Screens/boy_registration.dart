@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../Providers/boys_provider.dart';
 
 class RegisterBoyScreen extends StatelessWidget {
-  String registeredBy;
+  final String registeredBy;
   RegisterBoyScreen({Key? key,required this.registeredBy}) : super(key: key);
 
   final formKey = GlobalKey<FormState>();
