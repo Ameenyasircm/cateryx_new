@@ -1,0 +1,169 @@
+import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/core/theme/app_spacing.dart';
+import 'package:cateryyx/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../core/utils/url_launcher.dart';
+import '../Providers/ManagerProvider.dart';
+import 'boy_work_history_screen.dart';
+
+class BoyDetailsScreen extends StatelessWidget {
+  final Map boy;
+
+  const BoyDetailsScreen({super.key, required this.boy});
+
+  static const primaryBlue = Color(0xff1A237E);
+  static const primaryOrange = Color(0xffE65100);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Boy Details",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: primaryBlue,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            /// 👤 Profile Icon
+            CircleAvatar(
+              radius: 45,
+              backgroundColor: Colors.grey.shade200,
+              child: const Icon(Icons.person, size: 50, color: primaryBlue),
+            ),
+            AppSpacing.h20,
+
+            /// 📋 Work History Button
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 20),
+              child: ElevatedButton.icon(
+                onPressed: () => _navigateToWorkHistory(context,boy['BOY_ID'],boy['NAME']),
+                icon: const Icon(Icons.history, color: Colors.white),
+                label: const Text(
+                  "View Work History",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+
+            _infoTile("Name", boy['NAME']),
+            _infoTile("Phone", boy['PHONE']),
+            _infoTile("Guardian Contact", boy['GUARDIAN_PHONE']),
+            _infoTile("Date of Birth", boy['DOB']),
+            _infoTile("Blood Group", boy['BLOOD_GROUP']),
+            _infoTile("Place", boy['PLACE']),
+            _infoTile("District", boy['DISTRICT']),
+            _infoTile("Pin Code", boy['PIN']),
+            _infoTile("Address", boy['ADDRESS']),
+            AppSpacing.h30,
+
+            /// ☎️ Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => callNumber(boy['PHONE']),
+                    icon: const Icon(Icons.call, color: Colors.white),
+                    label: Text(
+                      "Call",
+                      style: AppTypography.body2.copyWith(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+                AppSpacing.w12,
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => openWhatsApp(boy['PHONE']),
+                    icon: Image.asset(
+                      'assets/whsp.png',
+                      height: 22,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      "WhatsApp",
+                      style: AppTypography.body2.copyWith(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 Navigate to Work History Screen
+  void _navigateToWorkHistory(BuildContext context,String boyId,String boyName) {
+    final state = context.read<ManagerProvider>();
+
+    state.fetchBoyWorkHistory(boyId);
+callNext(BoyWorkHistoryScreen(boyId: boyId, boyName: boyName,), context);
+  }
+
+  /// 🔹 Info Row Widget
+  Widget _infoTile(String label, String? value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: primaryBlue,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value ?? "-",
+              style: const TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

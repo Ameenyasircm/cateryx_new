@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -100,6 +102,7 @@ class BoysProvider extends ChangeNotifier{
       Map<String, dynamic> map = {
         "BOY_ID": boyId,
         "NAME": boyNameController.text.trim(),
+        "NAME_SEARCH": boyNameController.text.trim().toLowerCase(),
         "PHONE": phone,
         "GUARDIAN_PHONE": guardianController.text.trim(),
         "DOB": dobController.text.trim(),
@@ -159,36 +162,33 @@ class BoysProvider extends ChangeNotifier{
 
   List<Map<String, dynamic>> boysList = [];
   List<Map<String, dynamic>> filterBoysList = [];
+  List<Map<String, dynamic>> initialBoysList = []; // first 50
+
   bool isLoadingBoys = false;
   Future<void> fetchBoys() async {
-    print(' KJRNRF RF ');
     try {
       isLoadingBoys = true;
       notifyListeners();
 
-      boysList.clear();
-      filterBoysList.clear();
-
       final snapshot = await db
           .collection("BOYS")
           .orderBy("CREATED_TIME", descending: true)
+          .limit(100)
           .get();
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        boysList.add(data);
-      }
+      initialBoysList =
+          snapshot.docs.map((e) => e.data()).toList();
 
-      // initially full list
-      filterBoysList = List.from(boysList);
+      filterBoysList = List.from(initialBoysList);
 
     } catch (e) {
-      debugPrint("Fetch Boys Error: $e");
+      debugPrint("Fetch Error: $e");
     } finally {
       isLoadingBoys = false;
       notifyListeners();
     }
   }
+
 
   void filterBoys(String query) {
     if (query.isEmpty) {
@@ -202,6 +202,50 @@ class BoysProvider extends ChangeNotifier{
       }).toList();
     }
     notifyListeners();
+  }
+  bool isSearching = false;
+  Timer? _debounce;
+  DocumentSnapshot? lastSearchDoc;
+  void searchBoys(String query) {
+    _debounce?.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _searchFromDb(query);
+    });
+  }
+
+  Future<void> _searchFromDb(String query) async {
+
+    // 🔁 RESET STATE WHEN EMPTY
+    if (query.trim().isEmpty) {
+      filterBoysList = List.from(initialBoysList);
+      notifyListeners();
+      return;
+    }
+
+    try {
+      isSearching = true;
+      notifyListeners();
+
+      final q = query.toLowerCase();
+
+      final snap = await db
+          .collection("BOYS")
+          .orderBy("NAME_SEARCH")
+          .startAt([q])
+          .endAt([q + '\uf8ff'])
+          .limit(20)
+          .get();
+
+      filterBoysList =
+          snap.docs.map((e) => e.data() as Map<String, dynamic>).toList();
+
+    } catch (e) {
+      debugPrint("Search Error: $e");
+    } finally {
+      isSearching = false;
+      notifyListeners();
+    }
   }
 
   void clearBoyForm() {

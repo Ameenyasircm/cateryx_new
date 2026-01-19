@@ -1,10 +1,13 @@
+import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../Boys/Providers/boys_provider.dart';
+import '../../core/utils/url_launcher.dart';
+import 'BoyDetailsScreen.dart';
 
 class BoysListScreen extends StatelessWidget {
-  const BoysListScreen({Key? key}) : super(key: key);
+  const BoysListScreen({super.key});
 
   @override
 
@@ -36,26 +39,28 @@ class BoysListScreen extends StatelessWidget {
       body: Consumer<BoysProvider>(
         builder: (context, provider, _) {
 
-          /// 🔄 Loading State
           if (provider.isLoadingBoys) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          /// 📭 Empty State
-          if (provider.filterBoysList.isEmpty) {
-            return _emptyState();
-          }
-
           return Column(
             children: [
+              /// 🔍 ALWAYS VISIBLE
               _searchBar(provider),
+
               Expanded(
-                child: ListView.builder(
+                child: provider.filterBoysList.isEmpty
+                    ? _emptyState()
+                    : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: provider.filterBoysList.length,
                   itemBuilder: (context, index) {
                     final boy = provider.filterBoysList[index];
-                    return _boyCard(boy);
+                    return InkWell(
+                        onTap: (){
+                          callNext(BoyDetailsScreen(boy: boy),context);
+                        },
+                        child: _boyCard(boy));
                   },
                 ),
               ),
@@ -63,6 +68,7 @@ class BoysListScreen extends StatelessWidget {
           );
         },
       ),
+
     );
   }
 
@@ -71,7 +77,7 @@ class BoysListScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 5),
       child: TextField(
-        onChanged: provider.filterBoys,
+        onChanged: provider.searchBoys,
         decoration: InputDecoration(
           hintText: "Search by name or phone",
           prefixIcon: const Icon(Icons.search),
@@ -103,13 +109,19 @@ class BoysListScreen extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          /// 👤 Avatar
           CircleAvatar(
             radius: 26,
             backgroundColor: const Color(0xff1A237E).withOpacity(0.1),
-            child: const Icon(Icons.person, size: 30, color: Color(0xff1A237E)),
+            child: const Icon(Icons.person,
+                size: 30, color: Color(0xff1A237E)),
           ),
+
           const SizedBox(width: 14),
+
+          /// 📄 Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +152,24 @@ class BoysListScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+
+          /// ☎️ Action Buttons
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => callNumber(boy['PHONE']),
+                icon: const Icon(Icons.call, color: Colors.blue),
+              ),
+              IconButton(
+                onPressed: () => openWhatsApp(boy['PHONE']),
+                icon: Image.asset(
+                  'assets/whsp.png',
+                  color: Colors.green,
+                  scale: 8,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

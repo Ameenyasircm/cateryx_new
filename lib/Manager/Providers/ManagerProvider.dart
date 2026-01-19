@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/appConfig.dart';
+import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Models/BoysRequestModel.dart';
 import '../Models/event_model.dart';
 import '../Screens/LoginScreen.dart';
@@ -318,5 +319,40 @@ class ManagerProvider extends ChangeNotifier{
     pendingBoysList.removeWhere((e) => e.docId == docId);
     notifyListeners();
   }
+  /// boy work history
+  bool isLoadingWrkHistory = true;
+  List<Map<String, dynamic>> workHistory = [];
+
+  Future<void> fetchBoyWorkHistory(String boyId) async {
+    isLoadingWrkHistory = true;
+    notifyListeners();
+
+    try {
+      final querySnapshot = await db
+          .collection('BOYS')
+          .doc(boyId)
+          .collection('CONFIRMED_WORKS')
+          .where('STATUS', isEqualTo: 'CONFIRMED')
+          .orderBy('EVENT_DATE_TS', descending: true)
+          .get();
+
+      workHistory = querySnapshot.docs
+          .map((doc) => {
+        ...doc.data(),
+        'DOC_ID': doc.id,
+      })
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching work history: $e');
+      NotificationSnack.showError(e.toString());
+    } finally {
+      /// ✅ THIS WAS MISSING / WRONG
+      isLoadingWrkHistory = false;
+      notifyListeners();
+    }
+  }
+
+
+
 }
 

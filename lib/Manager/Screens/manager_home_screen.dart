@@ -147,7 +147,7 @@ class ManagerHomeScreen extends StatelessWidget {
 
           /// RUNNING EVENTS (INDEX 0)
           _tabItem(
-            title: "Running Events",
+            title: "Confirmed Events",
             isSelected: provider.selectedTabIndex == 0,
             onTap: () {
               provider.fetchRunningEvents();

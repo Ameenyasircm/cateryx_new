@@ -71,23 +71,15 @@ class EventService {
 
 
   /// Take a work
-  Future<void> takeWork(String eventId,String boyId) async {
-    // 🔹 Read from SharedPreferences
+  Future<void> takeWork(String eventId, String boyId) async {
     final prefs = await SharedPreferences.getInstance();
-
-    // final String boyId = prefs.getString('boyId') ?? '';
     final String boyName = prefs.getString('boyName') ?? '';
     final String boyPhone = prefs.getString('boyPhone') ?? '';
 
-    if (boyId.isEmpty) {
-      throw Exception('Boy not logged in');
-    }
+    if (boyId.isEmpty) throw Exception('Boy not logged in');
 
     final eventRef = _db.collection('EVENTS').doc(eventId);
-
-    final confirmedBoyRef =
-    eventRef.collection('CONFIRMED_BOYS').doc(boyId);
-
+    final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
     final boyWorkRef = _db
         .collection('BOYS')
         .doc(boyId)
@@ -95,63 +87,57 @@ class EventService {
         .doc(eventId);
 
     await _db.runTransaction((transaction) async {
-      // 1️⃣ Read Event
       final eventSnap = await transaction.get(eventRef);
-      if (!eventSnap.exists) {
-        throw Exception('Event not found');
-      }
+      if (!eventSnap.exists) throw Exception('Event not found');
 
       final data = eventSnap.data()!;
       final int required = data['BOYS_REQUIRED'] ?? 0;
       final int taken = data['BOYS_TAKEN'] ?? 0;
 
-      // 2️⃣ Check capacity
-      if (taken >= required) {
-        throw Exception('All slots are already filled');
-      }
+      if (taken >= required) throw Exception('All slots filled');
 
-      // 3️⃣ Prevent duplicate booking
-      if ((await transaction.get(confirmedBoyRef)).exists) {
-        throw Exception('You already took this work');
-      }
+      // Check duplicates in parallel
+      final results = await Future.wait([
+        transaction.get(confirmedBoyRef),
+        transaction.get(boyWorkRef),
+      ]);
 
-      if ((await transaction.get(boyWorkRef)).exists) {
-        throw Exception('Work already exists for this boy');
-      }
+      if (results[0].exists) throw Exception('Already took this work');
+      if (results[1].exists) throw Exception('Work already exists');
 
       final int updatedTaken = taken + 1;
 
-      // 4️⃣ Update EVENT
+      // Update event
       transaction.update(eventRef, {
         'BOYS_TAKEN': updatedTaken,
         if (updatedTaken == required) 'BOYS_STATUS': 'FULL',
       });
 
-      // 5️⃣ EVENTS → CONFIRMED_BOYS
-      transaction.set(confirmedBoyRef, {
-        ...data,
-        'ATTENDANCE_STATUS':'PENDING',
-        'BOY_ID': boyId,
-        'BOY_NAME': boyName,
-        'BOY_PHONE': boyPhone,
-        'STATUS': 'CONFIRMED',
-        'CONFIRMED_AT': FieldValue.serverTimestamp(),
-      });
-
-      // 6️⃣ BOYS → CONFIRMED_WORKS
-      transaction.set(boyWorkRef, {
-        ...data,
-        'ATTENDANCE_STATUS':'PENDING',
+      // Store ONLY essential data that won't change
+      final essentialData = {
         'EVENT_ID': eventId,
         'BOY_ID': boyId,
         'BOY_NAME': boyName,
         'BOY_PHONE': boyPhone,
         'STATUS': 'CONFIRMED',
+        'ATTENDANCE_STATUS': 'PENDING',
         'CONFIRMED_AT': FieldValue.serverTimestamp(),
-      });
+
+        // Only store IMMUTABLE event fields
+        'EVENT_NAME': data['EVENT_NAME'],
+        'EVENT_DATE': data['EVENT_DATE'],
+        'EVENT_DATE_TS': data['EVENT_DATE_TS'],
+        'LOCATION_NAME': data['LOCATION_NAME'],
+        'MEAL_TYPE': data['MEAL_TYPE'],
+      };
+
+      // EVENTS → CONFIRMED_BOYS
+      transaction.set(confirmedBoyRef, essentialData);
+
+      // BOYS → CONFIRMED_WORKS (same data)
+      transaction.set(boyWorkRef, essentialData);
     });
   }
-
   Future<List<EventModel>> fetchConfirmedWorks(String userId) async {
     try {
       final snapshot = await _db
