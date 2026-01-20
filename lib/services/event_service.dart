@@ -39,8 +39,7 @@ class EventService {
           .where(
         'EVENT_DATE_TS',
         isGreaterThanOrEqualTo:
-        Timestamp.fromDate(startOfTodayUtc),
-      )
+        Timestamp.fromDate(startOfTodayUtc),).where('WORK_ACTIVE_STATUS',isEqualTo: 'ACTIVE')
           .orderBy('EVENT_DATE_TS')
           .get();
 

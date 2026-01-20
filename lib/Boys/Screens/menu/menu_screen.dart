@@ -3,6 +3,7 @@ import '../../../Constants/my_functions.dart';
 import '../../../Manager/Screens/LoginScreen.dart';
 import '../../../Manager/Screens/update_password_screen.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/logout_alert.dart';
 import 'widgets/menu_header.dart';
 import 'widgets/menu_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,8 +55,12 @@ class MenuScreen extends StatelessWidget {
             showIcon: false,
             icon: Icons.logout_rounded,
             title: 'Logout',
-            onTap: () {
-              logout(context);
+            onTap: () async {
+              final shouldLogout = await showLogoutDialog(context);
+              if (shouldLogout == true) {
+                logout(context);
+              }
+
             },
           ),
           AppSpacing.h24,
