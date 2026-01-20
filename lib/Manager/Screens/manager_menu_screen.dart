@@ -1,9 +1,11 @@
 
 import 'package:cateryyx/Manager/Screens/update_password_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../../Constants/my_functions.dart';
 import '../Providers/ManagerProvider.dart';
+import 'about_screen.dart';
 import 'boys_requests.dart';
 
 class ManagerMenuScreen extends StatelessWidget {
@@ -119,11 +121,20 @@ class ManagerMenuScreen extends StatelessWidget {
                     );
                   },
                 ),
-                _menuTile(
-                  icon: Icons.info_outline_rounded,
-                  title: "About Evento",
-                  subtitle: "Version 1.0.2",
-                  onTap: () {},
+                FutureBuilder(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox();
+                      final info = snapshot.data!;
+                    return _menuTile(
+                      icon: Icons.info_outline_rounded,
+                      title: "About Cateryx",
+                      subtitle: "Version ${info.version}+${info.buildNumber}",
+                      onTap: () {
+                        callNext(AboutScreen(), context);
+                      },
+                    );
+                  }
                 ),
 
                 const SizedBox(height: 8),

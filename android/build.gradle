@@ -31,8 +31,6 @@
 //    delete rootProject.buildDir
 //}
 
-
-
 buildscript {
     ext.kotlin_version = '2.0.0'
     repositories {
