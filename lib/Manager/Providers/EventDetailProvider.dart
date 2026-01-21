@@ -277,7 +277,12 @@ class EventDetailsProvider extends ChangeNotifier {
     return result.docs.map((e) => e.data()).toList();
   }
 
-  Future<void> managerAssignBoyToEvent(String eventId, String boyId, BuildContext context) async {
+  bool addBoyBool=false;
+  Future<void> managerAssignBoyToEvent(
+      String eventId, String boyId) async {
+
+    addBoyBool = true;
+    notifyListeners();
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? adminName = prefs.getString('adminName');
@@ -308,6 +313,7 @@ class EventDetailsProvider extends ChangeNotifier {
 
       if ((await transaction.get(confirmedBoyRef)).exists)
         throw Exception("Boy already added");
+
       if ((await transaction.get(boyWorkRef)).exists)
         throw Exception("Already assigned");
 
@@ -332,15 +338,18 @@ class EventDetailsProvider extends ChangeNotifier {
         'EVENT_DATE': data['EVENT_DATE'],
         'EVENT_DATE_TS': data['EVENT_DATE_TS'],
         'LOCATION_NAME': data['LOCATION_NAME'],
-        'EVENT_ID': eventId,
       };
 
       transaction.set(confirmedBoyRef, minimalEventData);
       transaction.set(boyWorkRef, minimalEventData);
-
     });
-    fetchConfirmedBoys(eventId);
+
+    await fetchConfirmedBoys(eventId);
+
+    addBoyBool = false;
+    notifyListeners();
   }
+
 
 
 

@@ -1,3 +1,4 @@
+import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -249,48 +250,52 @@ void showConfirmAddBoyDialog(
           child: Text("Cancel"),
           onPressed: () => Navigator.pop(context),
         ),
-        ElevatedButton(
-          child: Text("Add Boy"),
-          onPressed: () async {
-            Navigator.pop(context);
+        Consumer<EventDetailsProvider>(
+          builder: (contextll,val,chillld) {
+            return val.addBoyBool
+                ? Center(child: CircularProgressIndicator())
+                : ElevatedButton(
+              child: Text("Add Boy"),
+              onPressed: () async {
+                try {
+                  await eventDetailsProvider.managerAssignBoyToEvent(eventId, boyId);
 
-            try {
-              await eventDetailsProvider.managerAssignBoyToEvent(eventId, boyId,context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("$boyName added successfully"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  finish(context);
+                } catch (e) {
+                  String msg = e.toString();
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("$boyName added successfully"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } catch (e) {
-              String msg = e.toString();
+                  msg = msg.replaceAll("Exception:", "").trim();
 
-              // Clean exception text
-              msg = msg.replaceAll("Exception:", "").trim();
+                  if (msg.contains("Boy already added")) {
+                    msg = "This boy is already added";
+                  } else if (msg.contains("Already assigned")) {
+                    msg = "This boy already has this work";
+                  } else if (msg.contains("All slots filled")) {
+                    msg = "All required slots are already filled";
+                  } else if (msg.contains("Boy not found")) {
+                    msg = "Boy not found";
+                  } else {
+                    msg = "Something went wrong";
+                  }
 
-              // Make messages user friendly
-              if (msg.contains("Boy already added")) {
-                msg = "This boy is already added";
-              } else if (msg.contains("Already assigned")) {
-                msg = "This boy already has this work";
-              } else if (msg.contains("All slots filled")) {
-                msg = "All required slots are already filled";
-              } else if (msg.contains("Boy not found")) {
-                msg = "Boy not found";
-              } else {
-                msg = "Something went wrong";
-              }
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(msg),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(msg),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            );
           },
-        ),
+        )
+,
       ],
     ),
   );
