@@ -349,6 +349,59 @@ class EventDetailsProvider extends ChangeNotifier {
     addBoyBool = false;
     notifyListeners();
   }
+  bool removeBoyLoader = false;
+
+  Future<void> removeBoyFromEvent(String eventId, String boyId) async {
+    removeBoyLoader = true;
+    notifyListeners();
+
+    try {
+      final eventRef = db.collection('EVENTS').doc(eventId);
+      final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
+      final boyWorkRef = db
+          .collection('BOYS')
+          .doc(boyId)
+          .collection('CONFIRMED_WORKS')
+          .doc(eventId);
+
+      await db.runTransaction((transaction) async {
+        final eventSnap = await transaction.get(eventRef);
+        if (!eventSnap.exists) throw Exception("Event not found");
+
+        final data = eventSnap.data()!;
+        final int taken = data['BOYS_TAKEN'] ?? 0;
+        if (taken <= 0) throw Exception("No boys assigned");
+
+        final boyInEvent = await transaction.get(confirmedBoyRef);
+        if (!boyInEvent.exists) throw Exception("Boy not assigned");
+
+        final updatedTaken = taken - 1;
+
+        transaction.update(eventRef, {
+          'BOYS_TAKEN': updatedTaken,
+          if (updatedTaken < (data['BOYS_REQUIRED'] ?? 0))
+            'BOYS_STATUS': 'AVAILABLE',
+        });
+
+        transaction.delete(confirmedBoyRef);
+        transaction.delete(boyWorkRef);
+      });
+
+      /// ❌ Your previous code was wrong
+      /// confirmedBoysList.removeAt(confirmedBoysList.where(...))
+
+      /// ✔ Correct way:
+      confirmedBoysList.removeWhere((e) => e.boyId == boyId);
+
+      await fetchConfirmedBoys(eventId);
+    } catch (e) {
+      print("Error removing boy: $e");
+    }
+
+    removeBoyLoader = false;
+    notifyListeners();
+  }
+
 
 
 

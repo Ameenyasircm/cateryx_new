@@ -96,48 +96,53 @@ class EventAllBoys extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final boy = provider.confirmedBoysList[index];
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 26,
-                          child: Icon(Icons.person, size: 28),
-                        ),
-                        const SizedBox(width: 12),
+                  return InkWell(
+                    onLongPress: (){
+                      showDeleteBoyDialog(context,eventId,boy.boyId,boy.boyName,eventDetailsProvider);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 26,
+                            child: Icon(Icons.person, size: 28),
+                          ),
+                          const SizedBox(width: 12),
 
-                        Expanded(
-                          child: Text(
-                            "${index + 1}. ${boy.boyName} - ${boy.boyPhone}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                          Expanded(
+                            child: Text(
+                              "${index + 1}. ${boy.boyName} - ${boy.boyPhone}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
 
-                        IconButton(
-                          onPressed: () => _callNumber(boy.boyPhone),
-                          icon: const Icon(Icons.call, color: Colors.green),
-                        ),
-                        IconButton(
-                          onPressed: () => _openWhatsApp(boy.boyPhone),
-                          icon: Image.asset('assets/whsp.png',
-                              color: Colors.teal, scale: 8),
-                        ),
-                      ],
+                          IconButton(
+                            onPressed: () => _callNumber(boy.boyPhone),
+                            icon: const Icon(Icons.call, color: Colors.green),
+                          ),
+                          IconButton(
+                            onPressed: () => _openWhatsApp(boy.boyPhone),
+                            icon: Image.asset('assets/whsp.png',
+                                color: Colors.teal, scale: 8),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -300,3 +305,43 @@ void showConfirmAddBoyDialog(
     ),
   );
 }
+void showDeleteBoyDialog(
+    BuildContext context,
+    String eventId,
+    String boyId,
+    String boyName,
+    EventDetailsProvider provider,
+    ) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text("Remove Boy"),
+      content: Text("Do you want to remove $boyName from this work?"),
+      actions: [
+        TextButton(
+          child: Text("Cancel"),
+          onPressed: () => Navigator.pop(context),
+        ),
+        Consumer<EventDetailsProvider>(
+          builder: (context,vaall,child) {
+            return
+            vaall.removeBoyLoader?
+               const Center(child: CircularProgressIndicator()):
+
+              ElevatedButton(
+              child: Text("Remove"),
+              onPressed: () async {
+                await provider.removeBoyFromEvent(eventId, boyId);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("$boyName removed from work")),
+                );
+              },
+            );
+          }
+        ),
+      ],
+    ),
+  );
+}
+
