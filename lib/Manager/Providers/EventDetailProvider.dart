@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
@@ -261,6 +262,87 @@ class EventDetailsProvider extends ChangeNotifier {
       print("Error: $e");
     }
   }
+
+
+  Future<List<Map<String, dynamic>>> searchBoys(String query) async {
+    if (query.trim().isEmpty) return [];
+
+    final result = await FirebaseFirestore.instance
+        .collection('BOYS')
+        .where('SEARCH_KEYWORDS', arrayContains: query.toLowerCase().trim())
+        .where('STATUS', isEqualTo: 'APPROVED')
+        .limit(20)
+        .get();
+
+    return result.docs.map((e) => e.data()).toList();
+  }
+
+  Future<void> managerAssignBoyToEvent(String eventId, String boyId, BuildContext context) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? adminName = prefs.getString('adminName');
+    String? adminID = prefs.getString('adminID');
+
+    final boyDoc = await db.collection('BOYS').doc(boyId).get();
+    if (!boyDoc.exists) throw Exception("Boy not found");
+
+    final boy = boyDoc.data()!;
+
+    final eventRef = db.collection('EVENTS').doc(eventId);
+    final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
+    final boyWorkRef = db
+        .collection('BOYS')
+        .doc(boyId)
+        .collection('CONFIRMED_WORKS')
+        .doc(eventId);
+
+    await db.runTransaction((transaction) async {
+      final eventSnap = await transaction.get(eventRef);
+      if (!eventSnap.exists) throw Exception("Event not found");
+
+      final data = eventSnap.data()!;
+      final int required = data['BOYS_REQUIRED'] ?? 0;
+      final int taken = data['BOYS_TAKEN'] ?? 0;
+
+      if (taken >= required) throw Exception("All slots filled");
+
+      if ((await transaction.get(confirmedBoyRef)).exists)
+        throw Exception("Boy already added");
+      if ((await transaction.get(boyWorkRef)).exists)
+        throw Exception("Already assigned");
+
+      final updatedTaken = taken + 1;
+
+      transaction.update(eventRef, {
+        'BOYS_TAKEN': updatedTaken,
+        if (updatedTaken == required) 'BOYS_STATUS': 'FULL',
+      });
+
+      final minimalEventData = {
+        'ADDED_BY_ID': adminID,
+        'ADDED_BY_NAME': adminName,
+        'EVENT_ID': eventId,
+        'BOY_ID': boyId,
+        'BOY_NAME': boy['NAME'],
+        'BOY_PHONE': boy['PHONE'],
+        'STATUS': 'CONFIRMED',
+        'ATTENDANCE_STATUS': 'PENDING',
+        'CONFIRMED_AT': FieldValue.serverTimestamp(),
+        'EVENT_NAME': data['EVENT_NAME'],
+        'EVENT_DATE': data['EVENT_DATE'],
+        'EVENT_DATE_TS': data['EVENT_DATE_TS'],
+        'LOCATION_NAME': data['LOCATION_NAME'],
+        'EVENT_ID': eventId,
+      };
+
+      transaction.set(confirmedBoyRef, minimalEventData);
+      transaction.set(boyWorkRef, minimalEventData);
+
+    });
+    fetchConfirmedBoys(eventId);
+  }
+
+
 
 
 }

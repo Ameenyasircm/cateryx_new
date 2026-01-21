@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/work_manage_boys_utils.dart';
 import '../Providers/EventDetailProvider.dart';
 
 class EventAllBoys extends StatelessWidget {
@@ -44,7 +45,7 @@ class EventAllBoys extends StatelessWidget {
       ),
 
       body: Consumer<EventDetailsProvider>(
-        builder: (context, provider, _) {
+        builder: (context555, provider, _) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -64,6 +65,7 @@ class EventAllBoys extends StatelessWidget {
                   const SizedBox(height: 15),
                   InkWell(
                     onTap: (){
+                      showBoySearchDialog(context,eventId,eventDetailsProvider);
                     },
                     child: Container(
                       height: 40,width: width,
@@ -71,7 +73,7 @@ class EventAllBoys extends StatelessWidget {
                         color: Colors.black.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(10)
                       ),
-                      child: Center(child: Text('Add New Boy',
+                      child: Center(child: Text('Add Boy',
                       style: TextStyle(color: Colors.white),)),
                     ),
                   ),
@@ -161,6 +163,134 @@ Widget _infoRow(String title, String value) {
           ),
         ),
         Expanded(child: Text(value, style: const TextStyle(fontSize: 15))),
+      ],
+    ),
+  );
+}
+
+void showBoySearchDialog(BuildContext context, String eventId,EventDetailsProvider eventDetailsProvider) {
+  String searchText = "";
+  List<Map<String, dynamic>> results = [];
+
+  showDialog(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (contextlll, setState) {
+          return AlertDialog(
+            title: Text("Search Boy"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search by name or phone",
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (value) async {
+                    searchText = value;
+                    if (searchText.length > 1) {
+                      results = await eventDetailsProvider.searchBoys(searchText);
+                    } else {
+                      results = [];
+                    }
+                    setState(() {});
+                  },
+                ),
+
+                SizedBox(height: 10),
+
+                SizedBox(
+                  height: 250,
+                  width: double.maxFinite,
+                  child: results.isEmpty
+                      ? Center(child: Text("No results"))
+                      : ListView.builder(
+                    itemCount: results.length,
+                    itemBuilder: (ctx, i) {
+                      final boy = results[i];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          child: Text(boy['NAME'][0]),
+                        ),
+                        title: Text(boy['NAME']),
+                        subtitle: Text(boy['PHONE']),
+                        onTap: () {
+                          Navigator.pop(context);
+                          showConfirmAddBoyDialog(
+                            context,
+                            eventId,
+                            boy['BOY_ID'],
+                            boy['NAME'],eventDetailsProvider,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+void showConfirmAddBoyDialog(
+    BuildContext context, String eventId, String boyId, String boyName,EventDetailsProvider eventDetailsProvider) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text("Confirm Assign"),
+      content: Text("Do you want to add $boyName to this work?"),
+      actions: [
+        TextButton(
+          child: Text("Cancel"),
+          onPressed: () => Navigator.pop(context),
+        ),
+        ElevatedButton(
+          child: Text("Add Boy"),
+          onPressed: () async {
+            Navigator.pop(context);
+
+            try {
+              await eventDetailsProvider.managerAssignBoyToEvent(eventId, boyId,context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("$boyName added successfully"),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } catch (e) {
+              String msg = e.toString();
+
+              // Clean exception text
+              msg = msg.replaceAll("Exception:", "").trim();
+
+              // Make messages user friendly
+              if (msg.contains("Boy already added")) {
+                msg = "This boy is already added";
+              } else if (msg.contains("Already assigned")) {
+                msg = "This boy already has this work";
+              } else if (msg.contains("All slots filled")) {
+                msg = "All required slots are already filled";
+              } else if (msg.contains("Boy not found")) {
+                msg = "Boy not found";
+              } else {
+                msg = "Something went wrong";
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(msg),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
       ],
     ),
   );
