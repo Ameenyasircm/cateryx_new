@@ -100,7 +100,6 @@ class ManagerProvider extends ChangeNotifier{
   }
 
   Future<void> createEventFun(BuildContext context) async {
-
     if (eventDateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select event date")),
@@ -108,35 +107,70 @@ class ManagerProvider extends ChangeNotifier{
       return;
     }
 
-    // if (latitude == null || longitude == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text("Please select event location")),
-    //   );
-    //   return;
-    // }
-
     try {
-      final String eventId =
-          "EVT${DateTime.now().millisecondsSinceEpoch}";
+      final String eventId = "EVT${DateTime.now().millisecondsSinceEpoch}";
+      final String eventName = nameController.text.trim();
+      final String location = locationController.text.trim();
+
+      // ------------------------------
+      // 🔥 Generate Search Keywords
+      // ------------------------------
+
+      /// 1. Event name keywords
+      List<String> eventKeywords = generateKeywords(eventName);
+
+      /// 2. Event name word-wise
+      if (eventName.contains(" ")) {
+        eventName.split(" ").forEach((word) {
+          eventKeywords.addAll(generateKeywords(word));
+        });
+      }
+
+      /// 3. Location keywords
+      List<String> locationKeywords = generateKeywords(location);
+
+      /// 4. Location word-wise
+      if (location.contains(" ")) {
+        location.split(" ").forEach((word) {
+          locationKeywords.addAll(generateKeywords(word));
+        });
+      }
+
+      /// 5. Merge both & remove duplicates
+      final List<String> finalKeywords = {
+        ...eventKeywords,
+        ...locationKeywords,
+      }.toList();
+
+      // ------------------------------
+      // 🔥 FIRESTORE SAVE
+      // ------------------------------
 
       await db.collection("EVENTS").doc(eventId).set({
         "EVENT_ID": eventId,
-        "EVENT_NAME": nameController.text.trim(),
+        "EVENT_NAME": eventName,
 
         /// 👇 BOTH FORMATS
         "EVENT_DATE": dateController.text.trim(),
         "EVENT_DATE_TS": Timestamp.fromDate(eventDateTime!),
-        'WORK_ACTIVE_STATUS':'ACTIVE',
+
+        'WORK_ACTIVE_STATUS': 'ACTIVE',
         "MEAL_TYPE": selectedMeal,
-        "LOCATION_NAME": locationController.text.trim(),
+        "LOCATION_NAME": location,
         "LATITUDE": latitude,
         "LONGITUDE": longitude,
         "BOYS_REQUIRED": int.parse(boysController.text),
         "DESCRIPTION": descController.text.trim(),
         "STATUS": "CREATED",
         "CREATED_TIME": FieldValue.serverTimestamp(),
+
+        /// 👇 Publish Status
         "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
-        "EVENT_STATUS": publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
+        "EVENT_STATUS":
+        publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
+
+        /// 👇 Final merged keywords
+        "SEARCH_KEYWORDS": finalKeywords,
       });
 
       Navigator.pop(context);
@@ -144,7 +178,8 @@ class ManagerProvider extends ChangeNotifier{
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Event created successfully")),
       );
-      fetchUpcomingEvents();
+
+      fetchRunningEvents();
     } catch (e) {
       debugPrint("Create Event Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -152,6 +187,7 @@ class ManagerProvider extends ChangeNotifier{
       );
     }
   }
+
 
   bool isLoading = false;
 
@@ -350,6 +386,17 @@ class ManagerProvider extends ChangeNotifier{
       isLoadingWrkHistory = false;
       notifyListeners();
     }
+  }
+
+  List<String> generateKeywords(String text) {
+    text = text.toLowerCase().trim();
+    List<String> keywords = [];
+
+    for (int i = 1; i <= text.length; i++) {
+      keywords.add(text.substring(0, i));
+    }
+
+    return keywords;
   }
 
 

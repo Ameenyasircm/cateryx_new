@@ -201,6 +201,68 @@ class EventDetailsProvider extends ChangeNotifier {
     );
   }
 
+
+
+  /// Generate search prefixes from a text
+  List<String> generateKeywords(String text) {
+    text = text.toLowerCase().trim();
+    List<String> keywords = [];
+
+    for (int i = 1; i <= text.length; i++) {
+      keywords.add(text.substring(0, i));
+    }
+
+    return keywords;
+  }
+
+  /// Run this ONCE to update all boys
+  Future<void> updateAllBoysSearchKeywords() async {
+    final db = FirebaseFirestore.instance;
+
+    try {
+      QuerySnapshot snap = await db.collection('BOYS').get();
+
+      for (var doc in snap.docs) {
+        String name = (doc.data() as Map<String, dynamic>)['NAME'] ?? '';
+        String phone = (doc.data() as Map<String, dynamic>)['PHONE'] ?? '';
+
+        // Generate name keywords
+        List<String> nameKeywords = generateKeywords(name);
+
+        // Generate keywords for each word in the name
+        if (name.contains(" ")) {
+          name.split(" ").forEach((part) {
+            nameKeywords.addAll(generateKeywords(part));
+          });
+        }
+
+        // Generate phone keywords
+        List<String> phoneKeywords = generateKeywords(phone);
+
+        // Merge + remove duplicates
+        List<String> finalKeywords = {
+          ...nameKeywords,
+          ...phoneKeywords,
+        }.toList();
+
+        // Update Firestore
+        await db.collection('BOYS').doc(doc.id).set(
+          {
+            "SEARCH_KEYWORDS": finalKeywords,
+          },
+          SetOptions(merge: true),
+        );
+
+        print("Updated ${doc.id}");
+      }
+
+      print("All boys updated successfully!");
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+
 }
 
 

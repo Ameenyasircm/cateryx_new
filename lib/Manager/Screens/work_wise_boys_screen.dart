@@ -24,6 +24,8 @@ class EventAllBoys extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double height=MediaQuery.of(context).size.height;
+    double width=MediaQuery.of(context).size.width;
     EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
     return Scaffold(
       backgroundColor: const Color(0xffF6F7FB),
@@ -59,6 +61,20 @@ class EventAllBoys extends StatelessWidget {
 
                   const SizedBox(height: 15),
                   const Divider(),
+                  const SizedBox(height: 15),
+                  InkWell(
+                    onTap: (){
+                    },
+                    child: Container(
+                      height: 40,width: width,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10)
+                      ),
+                      child: Center(child: Text('Add New Boy',
+                      style: TextStyle(color: Colors.white),)),
+                    ),
+                  ),
                   const SizedBox(height: 15),
 
                   const Text(

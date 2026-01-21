@@ -96,13 +96,39 @@ class BoysProvider extends ChangeNotifier{
         return;
       }
 
+      /// 👉 Prepare name and keywords
+      final String name = boyNameController.text.trim();
+
+      // --------------------
+      // 🔥 Generate Search Keywords
+      // --------------------
+
+      /// 1. Full name prefixes
+      List<String> nameKeywords = generateKeywords(name);
+
+      /// 2. Each word prefixes
+      if (name.contains(" ")) {
+        name.split(" ").forEach((word) {
+          nameKeywords.addAll(generateKeywords(word));
+        });
+      }
+
+      /// 3. Phone prefixes
+      List<String> phoneKeywords = generateKeywords(phone);
+
+      /// 4. Merge (remove duplicates)
+      List<String> finalKeywords = {
+        ...nameKeywords,
+        ...phoneKeywords,
+      }.toList();
+
       /// ✅ STEP 2: REGISTER BOY
       final boyId = "BOY${DateTime.now().millisecondsSinceEpoch}";
 
       Map<String, dynamic> map = {
         "BOY_ID": boyId,
-        "NAME": boyNameController.text.trim(),
-        "NAME_SEARCH": boyNameController.text.trim().toLowerCase(),
+        "NAME": name,
+        "NAME_SEARCH": name.toLowerCase(),
         "PHONE": phone,
         "GUARDIAN_PHONE": guardianController.text.trim(),
         "DOB": dobController.text.trim(),
@@ -114,6 +140,9 @@ class BoysProvider extends ChangeNotifier{
         "ADDRESS": addressController.text.trim(),
         "PASSWORD": confirmPasswordController.text.trim(),
         "CREATED_TIME": FieldValue.serverTimestamp(),
+
+        // 🔥 Add final merged keywords
+        "SEARCH_KEYWORDS": finalKeywords,
       };
 
       if (from == 'MANAGER') {
@@ -134,21 +163,24 @@ class BoysProvider extends ChangeNotifier{
           "DIRECT_APPROVAL_STATUS": "NO",
         });
       }
+
       await db.collection("BOYS").doc(boyId).set(map);
       Navigator.pop(context);
 
-      if(from=='MANAGER'){
+      if (from == 'MANAGER') {
         fetchBoys(); // refresh list
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Center(child: Text("Boy registered successfully")),
           ),
         );
-      }else{
+      } else {
         callNextReplacement(PendingAdminApproval(), context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Center(child: Text("Registered successfully,Pending Admin Approval")),
+            content: Center(
+                child:
+                Text("Registered successfully, Pending Admin Approval")),
           ),
         );
       }
@@ -187,6 +219,17 @@ class BoysProvider extends ChangeNotifier{
       isLoadingBoys = false;
       notifyListeners();
     }
+  }
+
+  List<String> generateKeywords(String text) {
+    text = text.toLowerCase().trim();
+    List<String> keywords = [];
+
+    for (int i = 1; i <= text.length; i++) {
+      keywords.add(text.substring(0, i));
+    }
+
+    return keywords;
   }
 
 

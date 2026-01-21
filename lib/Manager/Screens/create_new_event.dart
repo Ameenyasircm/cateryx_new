@@ -83,6 +83,7 @@ class CreateEventScreen extends StatelessWidget {
                   _label("Location"),
                   TextFormField(
                     controller: provider.locationController,
+                    readOnly: true,
                     decoration: _decoration(
                       "Add location from map",
                       Icons.map_outlined,

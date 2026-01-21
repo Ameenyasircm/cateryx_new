@@ -12,55 +12,101 @@ class MapPickerScreen extends StatefulWidget {
 class _MapPickerScreenState extends State<MapPickerScreen> {
   LatLng selectedLatLng = const LatLng(11.2588, 75.7804); // Default Kerala
   Marker? marker;
+  String selectedAddress = "Tap on map to pick location";
 
-  Future<String> _getAddress(LatLng latLng) async {
+  /// 🔥 Get address from lat/lng
+  Future<void> _updateAddress(LatLng latLng) async {
     try {
       List<Placemark> placemarks =
       await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
+
       final place = placemarks.first;
-      return "${place.name}, ${place.locality}, ${place.administrativeArea}";
-    } catch (_) {
-      return "Selected Location";
+
+      setState(() {
+        selectedAddress =
+        "${place.name}, ${place.locality}, ${place.administrativeArea}";
+      });
+    } catch (e) {
+      setState(() {
+        selectedAddress = "Selected Location";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Pick Location"),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final address = await _getAddress(selectedLatLng);
-              Navigator.pop(context, {
-                "address": address,
-                "lat": selectedLatLng.latitude,
-                "lng": selectedLatLng.longitude,
+      appBar: AppBar(title: const Text("Pick Location")),
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: selectedLatLng,
+              zoom: 14,
+            ),
+            onTap: (latLng) async {
+              setState(() {
+                selectedLatLng = latLng;
+                marker = Marker(
+                  markerId: const MarkerId("selected"),
+                  position: latLng,
+                );
               });
+
+              await _updateAddress(latLng);
             },
-            child: const Text(
-              "CONFIRM",
-              style: TextStyle(color: Colors.white),
+            markers: marker != null ? {marker!} : {},
+          ),
+
+          /// 🔥 Floating address box
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+                ],
+              ),
+              child: Text(
+                selectedAddress,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+
+          /// 🔥 Fixed bottom button
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.deepOrange,
+                ),
+                onPressed: () {
+                  Navigator.pop(context, {
+                    "address": selectedAddress,
+                    "lat": selectedLatLng.latitude,
+                    "lng": selectedLatLng.longitude,
+                  });
+                },
+                child: const Text(
+                  "Select This Location",
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
             ),
           )
         ],
-      ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: selectedLatLng,
-          zoom: 14,
-        ),
-        onTap: (latLng) {
-          setState(() {
-            selectedLatLng = latLng;
-            marker = Marker(
-              markerId: const MarkerId("selected"),
-              position: latLng,
-            );
-          });
-        },
-        markers: marker != null ? {marker!} : {},
       ),
     );
   }

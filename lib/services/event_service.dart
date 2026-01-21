@@ -95,7 +95,7 @@ class EventService {
 
       if (taken >= required) throw Exception('All slots filled');
 
-      // Check duplicates in parallel
+      // Check duplicates
       final results = await Future.wait([
         transaction.get(confirmedBoyRef),
         transaction.get(boyWorkRef),
@@ -104,37 +104,43 @@ class EventService {
       if (results[0].exists) throw Exception('Already took this work');
       if (results[1].exists) throw Exception('Work already exists');
 
-      final int updatedTaken = taken + 1;
+      final updatedTaken = taken + 1;
 
-      // Update event
+      // Update event TAKEN COUNT
       transaction.update(eventRef, {
         'BOYS_TAKEN': updatedTaken,
         if (updatedTaken == required) 'BOYS_STATUS': 'FULL',
       });
 
-      // Store ONLY essential data that won't change
-      final essentialData = {
+      /// -----------------------------------------------------------------
+      /// 🚀 STORE ONLY MINIMUM, IMPORTANT EVENT DATA
+      /// -----------------------------------------------------------------
+      final minimalEventData = {
         'EVENT_ID': eventId,
         'BOY_ID': boyId,
+
+        // Boy details
         'BOY_NAME': boyName,
         'BOY_PHONE': boyPhone,
+
+        // Status
         'STATUS': 'CONFIRMED',
         'ATTENDANCE_STATUS': 'PENDING',
         'CONFIRMED_AT': FieldValue.serverTimestamp(),
 
-        // Only store IMMUTABLE event fields
+        // ⬇️ Only these four event fields will be saved
         'EVENT_NAME': data['EVENT_NAME'],
         'EVENT_DATE': data['EVENT_DATE'],
         'EVENT_DATE_TS': data['EVENT_DATE_TS'],
         'LOCATION_NAME': data['LOCATION_NAME'],
-        'MEAL_TYPE': data['MEAL_TYPE'],
+        'EVENT_ID': eventId,
       };
 
       // EVENTS → CONFIRMED_BOYS
-      transaction.set(confirmedBoyRef, essentialData);
+      transaction.set(confirmedBoyRef, minimalEventData);
 
-      // BOYS → CONFIRMED_WORKS (same data)
-      transaction.set(boyWorkRef, essentialData);
+      // BOYS → CONFIRMED_WORKS
+      transaction.set(boyWorkRef, minimalEventData);
     });
   }
   Future<List<EventModel>> fetchConfirmedWorks(String userId) async {
