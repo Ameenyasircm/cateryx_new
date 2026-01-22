@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -187,6 +189,149 @@ class ManagerProvider extends ChangeNotifier{
       );
     }
   }
+
+  Future<void> editEventFun(BuildContext context, String eventId,EventDetailsProvider eventProvider) async {
+    try {
+      final eventRef = db.collection("EVENTS").doc(eventId);
+
+      // -------------------------------------------------
+      // 🔍 STEP 1: Check if at least one boy has taken the work
+      // -------------------------------------------------
+      final boysSnap =
+      await eventRef.collection("CONFIRMED_BOYS").limit(1).get();
+
+      final bool boysTaken = boysSnap.docs.isNotEmpty;
+
+      // =================================================
+      // 🟡 IF BOYS TAKEN → Do NOT allow event name & date edit
+      // =================================================
+      if (boysTaken) {
+        await eventRef.set({
+          // ❌ event name NOT updated
+          // ❌ event date NOT updated
+          // ❌ event_date_ts NOT updated
+          // ❌ keywords NOT regenerated
+
+          "MEAL_TYPE": selectedMeal,
+          "LOCATION_NAME": locationController.text.trim(),
+          "LATITUDE": latitude,
+          "LONGITUDE": longitude,
+          "BOYS_REQUIRED": int.parse(boysController.text),
+          "DESCRIPTION": descController.text.trim(),
+
+          "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
+          "EVENT_STATUS":
+          publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
+
+          "UPDATED_TIME": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        eventProvider.   fetchSingleEvent(eventId);
+        finish(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Event updated.\nEvent name and date cannot be edited because boys have already taken this work.",
+            ),
+          ),
+        );
+
+
+        return;
+      }
+
+      // =================================================
+      // 🟢 NO BOYS TAKEN → FULL EDIT ALLOWED
+      // =================================================
+
+      final String eventName = nameController.text.trim();
+      final String location = locationController.text.trim();
+
+      // 🔥 REGENERATE SEARCH KEYWORDS
+      List<String> eventKeywords = generateKeywords(eventName);
+      if (eventName.contains(" ")) {
+        for (var w in eventName.split(" ")) {
+          eventKeywords.addAll(generateKeywords(w));
+        }
+      }
+
+      List<String> locationKeywords = generateKeywords(location);
+      if (location.contains(" ")) {
+        for (var w in location.split(" ")) {
+          locationKeywords.addAll(generateKeywords(w));
+        }
+      }
+
+      final List<String> finalKeywords = {
+        ...eventKeywords,
+        ...locationKeywords,
+      }.toList();
+
+      // FULL UPDATE
+      await eventRef.set({
+        "EVENT_NAME": eventName,
+        "EVENT_DATE": dateController.text.trim(),
+        "EVENT_DATE_TS": Timestamp.fromDate(eventDateTime!),
+
+        "MEAL_TYPE": selectedMeal,
+        "LOCATION_NAME": location,
+        "LATITUDE": latitude,
+        "LONGITUDE": longitude,
+
+        "BOYS_REQUIRED": int.parse(boysController.text),
+        "DESCRIPTION": descController.text.trim(),
+
+        "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
+        "EVENT_STATUS":
+        publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
+
+        "SEARCH_KEYWORDS": finalKeywords,
+
+        "UPDATED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      eventProvider.   fetchSingleEvent(eventId);
+      finish(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Event updated successfully")),
+      );
+    } catch (e) {
+      debugPrint("Edit Event Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update event")),
+      );
+    }
+  }
+
+  bool lockNameAndDate = false;
+
+  Future<void> loadEventForEdit(String eventId) async {
+    final eventRef = db.collection("EVENTS").doc(eventId);
+
+    final boysSnap =
+    await eventRef.collection("CONFIRMED_BOYS").limit(1).get();
+    lockNameAndDate = boysSnap.docs.isNotEmpty;
+
+    final data = (await eventRef.get()).data()!;
+
+    // 👇 fill values
+    nameController.text = data["EVENT_NAME"];
+    dateController.text = data["EVENT_DATE"];
+    selectedMeal = data["MEAL_TYPE"];
+    locationController.text = data["LOCATION_NAME"];
+    latitude = data["LATITUDE"];
+    longitude = data["LONGITUDE"];
+    boysController.text = data["BOYS_REQUIRED"].toString();
+    descController.text = data["DESCRIPTION"];
+
+    // 🚀 IMPORTANT FIX — Set DateTime value for edit mode
+    if (data["EVENT_DATE_TS"] != null) {
+      eventDateTime = (data["EVENT_DATE_TS"] as Timestamp).toDate();
+    }
+
+    notifyListeners();
+  }
+
+
 
 
   bool isLoading = false;

@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
-  import 'package:provider/provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../Constants/appConfig.dart';
+import '../Providers/EventDetailProvider.dart';
 import '../Providers/ManagerProvider.dart';
 import 'map_pick_screen.dart';
 
 class CreateEventScreen extends StatelessWidget {
-   CreateEventScreen({Key? key}) : super(key: key);
+  final bool isEdit;
+  final String? eventId;
+
+  CreateEventScreen({
+    Key? key,
+    this.isEdit = false,
+    this.eventId,
+  }) : super(key: key);
+
   final formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     const primaryBlue = Color(0xff1A237E);
     const primaryOrange = Color(0xffE65100);
+    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
 
     return Consumer<ManagerProvider>(
       builder: (context, provider, _) {
@@ -24,9 +34,9 @@ class CreateEventScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: primaryBlue),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
-              "Create Event",
-              style: TextStyle(
+            title: Text(
+              isEdit ? "Edit Event" : "Create Event",
+              style: const TextStyle(
                 color: primaryBlue,
                 fontWeight: FontWeight.bold,
               ),
@@ -45,6 +55,7 @@ class CreateEventScreen extends StatelessWidget {
                     provider.nameController,
                     "Enter event name",
                     Icons.event,
+                    enabled: !provider.lockNameAndDate,
                   ),
 
                   const SizedBox(height: 15),
@@ -53,7 +64,10 @@ class CreateEventScreen extends StatelessWidget {
                   TextFormField(
                     controller: provider.dateController,
                     readOnly: true,
-                    onTap: () => provider.selectDate(context),
+                    enabled: !provider.lockNameAndDate,
+                    onTap: provider.lockNameAndDate
+                        ? null
+                        : () => provider.selectDate(context),
                     decoration: _decoration(
                       "Select Date",
                       Icons.calendar_today,
@@ -89,11 +103,13 @@ class CreateEventScreen extends StatelessWidget {
                       Icons.map_outlined,
                     ).copyWith(
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.my_location, color: Color(0xffE65100)),
+                        icon: const Icon(Icons.my_location,
+                            color: Color(0xffE65100)),
                         onPressed: () async {
                           final result = await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const MapPickerScreen()),
                           );
 
                           if (result != null) {
@@ -112,39 +128,40 @@ class CreateEventScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   _label("Publish Event"),
 
-                Wrap(
-                  spacing: 12,
-                  children: [
-                    ChoiceChip(
-                      label: const Text("Publish Now"),
-                      selected: provider.publishType == PublishType.now,
-                      selectedColor: const Color(0xffE65100),
-                      backgroundColor: Colors.grey.shade200,
-                      labelStyle: TextStyle(
-                        color: provider.publishType == PublishType.now
-                            ? Colors.white
-                            : Colors.black87,
-                        fontWeight: FontWeight.w600,
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      ChoiceChip(
+                        label: const Text("Publish Now"),
+                        selected: provider.publishType == PublishType.now,
+                        selectedColor: const Color(0xffE65100),
+                        backgroundColor: Colors.grey.shade200,
+                        labelStyle: TextStyle(
+                          color: provider.publishType == PublishType.now
+                              ? Colors.white
+                              : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        onSelected: (_) =>
+                            provider.changePublishType(PublishType.now),
                       ),
-                      onSelected: (_) =>
-                          provider.changePublishType(PublishType.now),
-                    ),
-                    ChoiceChip(
-                      label: const Text("Publish Later"),
-                      selected: provider.publishType == PublishType.later,
-                      selectedColor: const Color(0xffE65100),
-                      backgroundColor: Colors.grey.shade200,
-                      labelStyle: TextStyle(
-                        color: provider.publishType == PublishType.later
-                            ? Colors.white
-                            : Colors.black87,
-                        fontWeight: FontWeight.w600,
+                      ChoiceChip(
+                        label: const Text("Publish Later"),
+                        selected: provider.publishType == PublishType.later,
+                        selectedColor: const Color(0xffE65100),
+                        backgroundColor: Colors.grey.shade200,
+                        labelStyle: TextStyle(
+                          color: provider.publishType == PublishType.later
+                              ? Colors.white
+                              : Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        onSelected: (_) =>
+                            provider.changePublishType(PublishType.later),
                       ),
-                      onSelected: (_) =>
-                          provider.changePublishType(PublishType.later),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+
                   const SizedBox(height: 15),
 
                   _label("Number of Boys Required"),
@@ -171,9 +188,14 @@ class CreateEventScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: (){
+                      onPressed: () {
                         if (!formKey.currentState!.validate()) return;
-                        provider.createEventFun(context);
+
+                        if (isEdit) {
+                          provider.editEventFun(context, eventId!,eventDetailsProvider);
+                        } else {
+                          provider.createEventFun(context);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryOrange,
@@ -181,9 +203,9 @@ class CreateEventScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        "Create Event",
-                        style: TextStyle(
+                      child: Text(
+                        isEdit ? "Update Event" : "Create Event",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -235,9 +257,11 @@ class CreateEventScreen extends StatelessWidget {
       IconData icon, {
         TextInputType keyboard = TextInputType.text,
         int maxLines = 1,
+        bool enabled = true,
       }) {
     return TextFormField(
       controller: controller,
+      enabled: enabled,
       keyboardType: keyboard,
       maxLines: maxLines,
       decoration: _decoration(hint, icon),

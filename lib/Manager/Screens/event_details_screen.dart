@@ -1,6 +1,8 @@
 import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
 import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
+import 'package:cateryyx/Manager/Providers/ManagerProvider.dart';
+import 'package:cateryyx/Manager/Screens/create_new_event.dart';
 import 'package:cateryyx/Manager/Screens/work_wise_boys_screen.dart';
 import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:cateryyx/core/theme/app_typography.dart';
@@ -28,6 +30,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
   @override
   Widget build(BuildContext context) {
     EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
+    ManagerProvider managerProvider = Provider.of<ManagerProvider>(context);
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
@@ -143,7 +146,10 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                                 child: _outlineButton(
                                   text: 'Edit Event',
                                   icon: Icons.edit_calendar_rounded,
-                                  onTap: () {},
+                                  onTap: () {
+                                    managerProvider.loadEventForEdit(provider.eventModel!.eventId);
+                                    callNext(CreateEventScreen(eventId: provider.eventModel!.eventId,isEdit: true,), context);
+                                  },
                                 ),
                               ),
                               AppSpacing.w10,
