@@ -79,6 +79,60 @@ class EventAllBoys extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
+                  _label("Site Captain"),
+                  InkWell(
+                    onTap: () {
+                      if (provider.confirmedBoysList.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("No boys available to assign as captain"),
+                          ),
+                        );
+                        return;
+                      }
+
+                      showSelectCaptainDialog(context, provider, eventId);
+                    },
+                    child: Container(
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade700,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          /// Captain Name / Choose Captain
+                          Text(
+                            provider.siteCaptainName.isEmpty
+                                ? "Choose Captain"
+                                : "Captain: ${provider.siteCaptainName}",
+                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+
+                          Row(
+                            children: [
+                              /// DELETE ICON only if captain exists
+                              if (provider.siteCaptainId.isNotEmpty)
+                                InkWell(
+                                  onTap: () {
+                                    showRemoveCaptainConfirmation(eventId,context, provider);
+                                  },
+                                  child: const Icon(Icons.delete, color: Colors.white),
+                                ),
+
+                              const SizedBox(width: 8),
+
+                              const Icon(Icons.arrow_drop_down, color: Colors.white),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
 
                   const Text(
                     "Confirmed Boys",
@@ -345,3 +399,226 @@ void showDeleteBoyDialog(
   );
 }
 
+void showSelectCaptainDialog(
+    BuildContext context,
+    EventDetailsProvider provider,
+    String eventId,
+    ) {
+  TextEditingController searchController = TextEditingController();
+
+  List filteredList = provider.confirmedBoysList;
+  String? selectedBoyId = provider.siteCaptainId; // preselect if exists
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              width: 360,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Select Site Captain",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  /// 🔍 SEARCH BOX
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: "Search boys...",
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onChanged: (query) {
+                      setState(() {
+                        filteredList = provider.confirmedBoysList
+                            .where((boy) =>
+                        boy.boyName
+                            .toLowerCase()
+                            .contains(query.toLowerCase()) ||
+                            boy.boyPhone.contains(query))
+                            .toList();
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  /// LIST OF BOYS (SCROLLABLE)
+                  SizedBox(
+                    height: 350,
+                    child: ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final boy = filteredList[index];
+
+                        bool isSelected = selectedBoyId == boy.boyId;
+
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              selectedBoyId = boy.boyId;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 5),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.orange.withOpacity(0.2)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(boy.boyName),
+                              subtitle: Text(boy.boyPhone),
+                              trailing: isSelected
+                                  ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  /// SAVE BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    height: 45,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade800,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (selectedBoyId == null ||
+                            selectedBoyId!.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                Text("Please select a captain first")),
+                          );
+                          return;
+                        }
+
+                        /// Confirm before saving
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Confirm Captain"),
+                            content: Text(
+                                "Assign ${filteredList.firstWhere((b) => b.boyId == selectedBoyId).boyName} as Site Captain?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context); // close confirm
+                                  Navigator.pop(context); // close dialog
+
+                                  final selectedBoy =
+                                  filteredList.firstWhere(
+                                          (b) => b.boyId == selectedBoyId);
+
+                                  await provider.assignSiteCaptain(
+                                    boyId: selectedBoy.boyId,
+                                    boyName: selectedBoy.boyName,
+                                    currentEventId: eventId,
+                                  );
+                                },
+                                child: const Text(
+                                  "Assign",
+                                  style: TextStyle(color: Colors.green),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Save Captain",
+                        style:
+                        TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
+Widget _label(String text) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Color(0xff1A237E),
+      ),
+    ),
+  );
+}
+void showRemoveCaptainConfirmation(String eventID,
+    BuildContext context, EventDetailsProvider provider) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: const Text("Remove Captain?"),
+      content: Text(
+        "Are you sure you want to remove ${provider.siteCaptainName} "
+            "as the site captain?",
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            await provider.removeSiteCaptain(eventID);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Site Captain removed")),
+            );
+          },
+          child: const Text(
+            "Remove",
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    ),
+  );
+}

@@ -287,8 +287,8 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? adminName = prefs.getString('adminName');
-    String? adminID = prefs.getString('adminID');
+    String? adminName = prefs.getString('adminName').toString();
+    String? adminID = prefs.getString('adminID').toString();
 
     final boyDoc = await db.collection('BOYS').doc(boyId).get();
     if (!boyDoc.exists) throw Exception("Boy not found");
@@ -421,6 +421,140 @@ class EventDetailsProvider extends ChangeNotifier {
     }
   }
 
+
+  String siteCaptainId = "";
+  String siteCaptainName = "";
+
+  Future<void> assignSiteCaptain({
+    required String boyId,
+    required String boyName,
+    required String currentEventId,
+  }) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? addedByName = prefs.getString('adminName').toString();
+      String? addedById = prefs.getString('adminID').toString();
+
+
+      siteCaptainId = boyId;
+      siteCaptainName = boyName;
+      notifyListeners();
+
+      final eventRef = db.collection("EVENTS").doc(currentEventId);
+
+      // -----------------------------
+      // 1️⃣ UPDATE EVENT ROOT DOCUMENT
+      // -----------------------------
+      await eventRef.set({
+        "SITE_CAPTAIN_ID": boyId,
+        "SITE_CAPTAIN_NAME": boyName,
+        "SITE_CAPTAIN_ADDED_BY_ID": addedById,
+        "SITE_CAPTAIN_ADDED_BY_NAME": addedByName,
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // -----------------------------
+      // 2️⃣ UPDATE CONFIRMED BOY ENTRY INSIDE EVENT
+      // -----------------------------
+      await eventRef
+          .collection("CONFIRMED_BOYS")
+          .doc(boyId)
+          .set({
+        "SITE_CAPTAIN_STATUS": "YES",
+        "SITE_CAPTAIN_ADDED_BY_ID": addedById,
+        "SITE_CAPTAIN_ADDED_BY_NAME": addedByName,
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // -----------------------------
+      // 3️⃣ UPDATE BOY → CONFIRMED_WORKS → EVENT ENTRY
+      // -----------------------------
+      await db
+          .collection("BOYS")
+          .doc(boyId)
+          .collection("CONFIRMED_WORKS")
+          .doc(currentEventId)
+          .set({
+        "SITE_CAPTAIN_STATUS": "YES",
+        "SITE_CAPTAIN_ADDED_BY_ID": addedById,
+        "SITE_CAPTAIN_ADDED_BY_NAME": addedByName,
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+    } catch (e) {
+      debugPrint("Captain Assign Error: $e");
+    }
+  }
+
+  Future<void> fetchSiteCaptain(String eventId) async {
+    try {
+      final eventDoc =
+      await db.collection("EVENTS").doc(eventId).get();
+
+      if (!eventDoc.exists) return;
+
+      final data = eventDoc.data()!;
+
+      siteCaptainId = data["SITE_CAPTAIN_ID"] ?? "";
+      siteCaptainName = data["SITE_CAPTAIN_NAME"] ?? "";
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Fetch Captain Error: $e");
+    }
+  }
+
+  Future<void> removeSiteCaptain(String eventId) async {
+    if (siteCaptainId.isEmpty) return;
+
+    try {
+
+      String boyId = siteCaptainId;
+
+      // --------- 1. REMOVE FROM EVENT ROOT ---------
+      await db.collection("EVENTS").doc(eventId).set({
+        "SITE_CAPTAIN_ID": FieldValue.delete(),
+        "SITE_CAPTAIN_NAME": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_ID": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_NAME": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.delete(),
+      }, SetOptions(merge: true));
+
+      // --------- 2. UPDATE CONFIRMED BOYS ---------
+      await db
+          .collection("EVENTS")
+          .doc(eventId)
+          .collection("CONFIRMED_BOYS")
+          .doc(boyId)
+          .set({
+        "SITE_CAPTAIN_STATUS": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_ID": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_NAME": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.delete(),
+      }, SetOptions(merge: true));
+
+      // --------- 3. UPDATE BOY → CONFIRMED_WORKS ---------
+      await db
+          .collection("BOYS")
+          .doc(boyId)
+          .collection("CONFIRMED_WORKS")
+          .doc(eventId)
+          .set({
+        "SITE_CAPTAIN_STATUS": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_ID": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_BY_NAME": FieldValue.delete(),
+        "SITE_CAPTAIN_ADDED_TIME": FieldValue.delete(),
+      }, SetOptions(merge: true));
+
+      // --------- 4. RESET PROVIDER VARIABLES ---------
+      siteCaptainId = "";
+      siteCaptainName = "";
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Remove Captain Error: $e");
+    }
+  }
 
 
 

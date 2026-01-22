@@ -115,6 +115,7 @@ class ManagerHomeScreen extends StatelessWidget {
                       onTap: () {
                         eventDetailsProvider.fetchConfirmedBoys(event.eventId);
                         eventDetailsProvider.setEventModelData(event);
+                        eventDetailsProvider.fetchSiteCaptain(event.eventId);
                         callNext(
                           EventDetailedScreen(eventID: event.eventId,),
                           context,
