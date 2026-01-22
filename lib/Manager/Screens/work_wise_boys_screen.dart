@@ -93,7 +93,7 @@ class EventAllBoys extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: provider.confirmedBoysList.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (contexted, index) {
                   final boy = provider.confirmedBoysList[index];
 
                   return InkWell(
@@ -323,7 +323,7 @@ void showDeleteBoyDialog(
           onPressed: () => Navigator.pop(context),
         ),
         Consumer<EventDetailsProvider>(
-          builder: (context,vaall,child) {
+          builder: (contextd,vaall,child) {
             return
             vaall.removeBoyLoader?
                const Center(child: CircularProgressIndicator()):
@@ -331,7 +331,7 @@ void showDeleteBoyDialog(
               ElevatedButton(
               child: Text("Remove"),
               onPressed: () async {
-                await provider.removeBoyFromEvent(eventId, boyId);
+                await provider.removeBoyFromEvent(eventId, boyId,context);
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("$boyName removed from work")),

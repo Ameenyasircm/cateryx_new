@@ -1,3 +1,5 @@
+import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/Manager/Models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
@@ -343,7 +345,7 @@ class EventDetailsProvider extends ChangeNotifier {
       transaction.set(confirmedBoyRef, minimalEventData);
       transaction.set(boyWorkRef, minimalEventData);
     });
-
+    fetchSingleEvent(eventId);
     await fetchConfirmedBoys(eventId);
 
     addBoyBool = false;
@@ -351,7 +353,7 @@ class EventDetailsProvider extends ChangeNotifier {
   }
   bool removeBoyLoader = false;
 
-  Future<void> removeBoyFromEvent(String eventId, String boyId) async {
+  Future<void> removeBoyFromEvent(String eventId, String boyId,BuildContext context) async {
     removeBoyLoader = true;
     notifyListeners();
 
@@ -397,10 +399,28 @@ class EventDetailsProvider extends ChangeNotifier {
     } catch (e) {
       print("Error removing boy: $e");
     }
-
+    fetchSingleEvent(eventId);
     removeBoyLoader = false;
     notifyListeners();
+
+    finish(context);
   }
+
+  EventModel? eventModel;
+
+  void setEventModelData(EventModel data){
+    eventModel = data;
+    notifyListeners();
+  }
+
+  Future<void> fetchSingleEvent(String eventId) async {
+    final snap = await db.collection('EVENTS').doc(eventId).get();
+    if (snap.exists) {
+      eventModel = EventModel.fromMap(snap.data()!);
+      notifyListeners();
+    }
+  }
+
 
 
 

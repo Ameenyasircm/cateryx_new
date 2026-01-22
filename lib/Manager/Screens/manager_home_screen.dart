@@ -114,8 +114,9 @@ class ManagerHomeScreen extends StatelessWidget {
                     return InkWell(
                       onTap: () {
                         eventDetailsProvider.fetchConfirmedBoys(event.eventId);
+                        eventDetailsProvider.setEventModelData(event);
                         callNext(
-                          EventDetailedScreen(event: event,),
+                          EventDetailedScreen(eventID: event.eventId,),
                           context,
                         );
                       },
