@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/appConfig.dart';
 import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Models/BoysRequestModel.dart';
+import '../Models/closed_event_model.dart';
 import '../Models/event_model.dart';
 import '../Screens/LoginScreen.dart';
 
@@ -544,6 +545,65 @@ class ManagerProvider extends ChangeNotifier{
     return keywords;
   }
 
+  Future<void> closeEvent(String eventId) async {
+    final prefs=await SharedPreferences.getInstance();
+    String adminId=prefs.getString('adminID')??"";
+    String adminName=prefs.getString('adminName')??"";
+    String adminPhone=prefs.getString('phone_number')??"";
+    await db.collection('EVENTS').doc(eventId).update({
+      'STATUS': 'CLOSED',
+      'WORK_ACTIVE_STATUS':'CLOSED',
+      'WORK_CLOSED_BY':adminName,
+      'WORK_CLOSED_BY_ID':adminId,
+      'WORK_CLOSED_BY_PHONE':adminPhone,
+      'CLOSED_TIME': FieldValue.serverTimestamp(),
+    });
+
+    runningEventsList.removeWhere((e) => e.eventId == eventId);
+    notifyListeners();
+  }
+  List<ClosedEventModel> closedEventsList = [];
+  bool isLoadingClosedEvents = false;
+
+  Future<void> fetchClosedEvents({DateTime? date}) async {
+    isLoadingClosedEvents = true;
+    notifyListeners();
+
+    Query query = db
+        .collection('EVENTS')
+        .where('WORK_ACTIVE_STATUS', isEqualTo: 'CLOSED');
+
+    if (date != null) {
+      final start = DateTime(date.year, date.month, date.day);
+      final end = start.add(const Duration(days: 1));
+
+      query = query
+          .where(
+        'CLOSED_TIME',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+      )
+          .where(
+        'CLOSED_TIME',
+        isLessThan: Timestamp.fromDate(end),
+      );
+    }
+
+    final result = await query
+        .orderBy('CLOSED_TIME', descending: true)
+        .get();
+    closedEventsList = result.docs
+        .where((e) => e.data() != null)
+        .map(
+          (e) => ClosedEventModel.fromMap(
+        Map<String, dynamic>.from(e.data() as Map),
+      ),
+    )
+        .toList();
+
+
+    isLoadingClosedEvents = false;
+    notifyListeners();
+  }
 
 
 }

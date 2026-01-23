@@ -7,6 +7,7 @@ import '../../Constants/my_functions.dart';
 import '../Providers/ManagerProvider.dart';
 import 'about_screen.dart';
 import 'boys_requests.dart';
+import 'closed_events_screen.dart';
 
 class ManagerMenuScreen extends StatelessWidget {
   final String managerName;
@@ -108,7 +109,10 @@ class ManagerMenuScreen extends StatelessWidget {
                   icon: Icons.task_alt_rounded,
                   title: "Completed Works",
                   subtitle: "Finished job details",
-                  onTap: () {},
+                  onTap: () {
+                    context.read<ManagerProvider>().fetchClosedEvents();
+                    callNext(ClosedEventsScreen(), context);
+                  },
                 ),
                 _menuTile(
                   icon: Icons.lock_open_rounded,

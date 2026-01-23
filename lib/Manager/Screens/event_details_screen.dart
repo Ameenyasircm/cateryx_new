@@ -11,6 +11,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../Constants/colors.dart';
+import '../../core/utils/confirm_dialog_utils.dart';
 import '../Models/event_model.dart';
 import 'attendence_screen.dart';
 import 'event_payment_screen.dart';
@@ -165,6 +166,36 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           ),
 
                           AppSpacing.h20,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _outlineButton(
+                                text: 'Close Event',
+                                textColor: Colors.black,
+                                onTap: () async {
+                                  final isConfirmed = await showConfirmationDialog(
+                                    context: context,
+                                    title: 'Close Event',
+                                    message: 'Are you sure you want to close this event?',
+                                    confirmText: 'Close',
+                                    cancelText: 'Cancel',
+                                  );
+
+                                  if (!isConfirmed) return;
+
+                                  managerProvider.closeEvent(
+                                    provider.eventModel!.eventId,
+                                  );
+                                  finish(context);
+
+
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        AppSpacing.h20,
 
                           /// Work Status
                         Container(
@@ -434,7 +465,8 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
 
   Widget _outlineButton({
     required String text,
-    required IconData icon,
+     IconData? icon,
+     Color textColor=buttonColor,
     required VoidCallback onTap,
   }) {
     return SizedBox(
@@ -442,15 +474,15 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: Icon(
+        icon:icon!=null? Icon(
           icon,
           size: 18,
           color: buttonColor,
-        ),
+        ):null,
         label: Text(
           text,
           style: AppTypography.body2.copyWith(
-            color: buttonColor,
+            color: textColor,
             fontWeight: FontWeight.w500,
             fontSize: 13.sp,
           ),
