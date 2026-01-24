@@ -16,7 +16,7 @@ class AppTypography {
   );
 
   // H2 — Section Title
-  static TextStyle get h2 => GoogleFonts.inter(
+  static TextStyle get h2 => GoogleFonts.poppins(
     textStyle: TextStyle(
       fontSize: 20.sp,
       fontWeight: FontWeight.w600,
@@ -25,7 +25,7 @@ class AppTypography {
   );
 
   // Subtitle — Secondary heading
-  static TextStyle get subtitle => GoogleFonts.inter(
+  static TextStyle get subtitle => GoogleFonts.poppins(
     textStyle: TextStyle(
       fontSize: 18.sp,
       fontWeight: FontWeight.w500,
@@ -34,7 +34,7 @@ class AppTypography {
   );
 
   // Body1 — Main body text
-  static TextStyle get body1 => GoogleFonts.inter(
+  static TextStyle get body1 => GoogleFonts.poppins(
     textStyle: TextStyle(
       fontSize: 16.sp,
       fontWeight: FontWeight.w500,
@@ -43,7 +43,7 @@ class AppTypography {
   );
 
   // Body2 — Smaller body text
-  static TextStyle get body2 => GoogleFonts.inter(
+  static TextStyle get body2 => GoogleFonts.poppins(
     textStyle: TextStyle(
       fontSize: 14.sp,
       fontWeight: FontWeight.w400,
@@ -52,7 +52,7 @@ class AppTypography {
   );
 
   // Caption — Smallest text
-  static TextStyle get caption => GoogleFonts.inter(
+  static TextStyle get caption => GoogleFonts.poppins(
     textStyle: TextStyle(
       fontSize: 12.sp,
       fontWeight: FontWeight.w400,

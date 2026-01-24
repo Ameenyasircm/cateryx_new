@@ -3,52 +3,44 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../Constants/colors.dart';
+import '../../Constants/my_functions.dart';
+import '../../core/theme/app_typography.dart';
 import '../Models/closed_event_model.dart';
+import '../Providers/EventDetailProvider.dart';
+import 'closed_event_details_screen.dart';
 
-class ClosedEventsScreen extends StatefulWidget {
+class ClosedEventsScreen extends StatelessWidget {
   const ClosedEventsScreen({super.key});
 
   @override
-  State<ClosedEventsScreen> createState() => _ClosedEventsScreenState();
-}
-
-class _ClosedEventsScreenState extends State<ClosedEventsScreen> {
-  DateTime? selectedDate;
-
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      selectedDate = picked;
-      context.read<ManagerProvider>().fetchClosedEvents(date: picked);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final provider = context.watch<ManagerProvider>();
+    final provider = context.watch<EventDetailsProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Closed Events'),
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        backgroundColor:blue7E,
+        title:  Text('Closed Events',style: AppTypography.body1.copyWith(
+            color: Colors.white
+        ),),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today),
-            onPressed: _pickDate,
+            icon: const Icon(Icons.calendar_today,color: Colors.white,),
+            onPressed: (){
+              provider.pickDate(context);
+            },
           ),
-          if (selectedDate != null)
+          if (provider.selectedDate != null)
             IconButton(
-              icon: const Icon(Icons.clear),
+              icon: const Icon(Icons.clear,color: Colors.white,),
               onPressed: () {
-                selectedDate = null;
+                provider.selectedDate = null;
                 provider.fetchClosedEvents();
               },
             ),
@@ -58,7 +50,7 @@ class _ClosedEventsScreenState extends State<ClosedEventsScreen> {
     );
   }
 
-  Widget _buildBody(ManagerProvider provider) {
+  Widget _buildBody(EventDetailsProvider provider) {
     if (provider.isLoadingClosedEvents) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -77,11 +69,17 @@ class _ClosedEventsScreenState extends State<ClosedEventsScreen> {
       itemCount: provider.closedEventsList.length,
       itemBuilder: (context, index) {
         final event = provider.closedEventsList[index];
-        return _ClosedEventCard(event: event);
+        return InkWell(
+            onTap: (){
+              provider.setClosedEventModelData(event);
+              callNext(ClosedEventDetailsScreen(), context);
+            },
+            child: _ClosedEventCard(event: event));
       },
     );
   }
 }
+
 class _ClosedEventCard extends StatelessWidget {
   final ClosedEventModel event;
 

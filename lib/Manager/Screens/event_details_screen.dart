@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import '../../Constants/colors.dart';
 import '../../core/utils/confirm_dialog_utils.dart';
 import '../Models/event_model.dart';
+import '../widgets/event_details_widgets.dart';
 import 'attendence_screen.dart';
 import 'event_payment_screen.dart';
 
@@ -77,7 +78,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                         AppSpacing.h20,
 
                         /// Event Date
-                        _infoTile(
+                        infoTile(
                           icon: Icons.calendar_month,
                           text: provider.eventModel!.eventDate,
                         ),
@@ -85,7 +86,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                         AppSpacing.h10,
 
                         /// Location
-                        _infoTile(
+                        infoTile(
                           icon: Icons.location_on_outlined,
                           text: provider.eventModel!.locationName,
                         ),
@@ -200,7 +201,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           /// Work Status
                         Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: _cardDecoration(color: Colors.grey.shade300),
+                          decoration: cardDecoration(color: Colors.grey.shade300),
                           child: Row(
                             children: [
                               Expanded(
@@ -263,32 +264,32 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           AppSpacing.h20,
 
                           /// Event Location
-                          _sectionTitle('Event Location'),
-                          _detailCard(children: [
-                            _detailRow('Location', provider.eventModel!.locationName),
-                            _divider(),
-                            _detailRow('Meal Type', provider.eventModel!.mealType),
-                            _divider(),
-                            _detailRow('Event Date', provider.eventModel!.eventDate),
+                          sectionTitle('Event Location'),
+                          detailCard(children: [
+                            detailRow('Location', provider.eventModel!.locationName),
+                            divider(),
+                            detailRow('Meal Type', provider.eventModel!.mealType),
+                            divider(),
+                            detailRow('Event Date', provider.eventModel!.eventDate),
                           ]),
 
                           AppSpacing.h20,
 
                           /// Google Map
-                          _sectionTitle('Google Map Location'),
-                          _mapBox(provider.eventModel!.latitude, provider.eventModel!.longitude,context),
+                          sectionTitle('Google Map Location'),
+                          mapBox(provider.eventModel!.latitude, provider.eventModel!.longitude,context),
 
                           AppSpacing.h20,
 
                           /// Event Details
-                          _sectionTitle(''
+                          sectionTitle(''
                               'Event Details'),
-                          _detailCard(children: [
-                            _detailRow('Description', provider.eventModel!.description),
-                            _divider(),
-                            _detailRow('Boys Required', provider.eventModel!.boysRequired.toString()),
-                            _divider(),
-                            _detailRow('Status', provider.eventModel!.status),
+                          detailCard(children: [
+                            detailRow('Description', provider.eventModel!.description),
+                            divider(),
+                            detailRow('Boys Required', provider.eventModel!.boysRequired.toString()),
+                            divider(),
+                            detailRow('Status', provider.eventModel!.status),
                           ]),
 
                           AppSpacing.h20,
@@ -307,118 +308,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
 
   /// ---------------- Reusable Widgets ----------------
 
-  Widget _infoTile({required IconData icon, required String text}) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDecoration(),
-      child: Row(
-        children: [
-          Icon(icon, color: clWhite),
-          AppSpacing.w10,
-          Expanded(
-            child: Text(
-              text,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.body2.copyWith(color: clWhite),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _mapBox(double lat, double lng,BuildContext context) {
-    EventDetailsProvider eventDetailsProvider = Provider.of<EventDetailsProvider>(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _cardDecoration(color: Colors.grey.shade300),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  lat == 0 && lng == 0
-                      ? 'Location not available'
-                      : 'Lat: $lat , Lng: $lng',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(Icons.open_in_new, color: Colors.blue),
-            ],
-          ),
-          AppSpacing.h10,
-          OutlinedButton.icon(
-            onPressed: lat == 0 && lng == 0 ? null : () {
-              eventDetailsProvider.openGoogleMap(lat, lng);
-            },
-            icon: const Icon(Icons.location_on_outlined, color: Colors.blueAccent),
-            label: Text(
-              'Open Google Map',
-              style: AppTypography.body1.copyWith(color: Colors.blueAccent),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Divider _divider() => const Divider(thickness: 0.4);
-
-  BoxDecoration _cardDecoration({Color color = Colors.white12}) {
-    return BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 5,
-        ),
-      ],
-    );
-  }
-
-
-  Widget _sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: AppTypography.body1.copyWith(fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-
-  Widget _detailCard({required List<Widget> children}) {
-    return Container(
-      decoration: _cardDecoration(color: Colors.grey.shade300),
-      child: Column(children: children),
-    );
-  }
-
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: AppTypography.caption.copyWith(color: Colors.grey),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTypography.caption,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _primaryButton({
     required String text,

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
+import '../Models/closed_event_model.dart';
 
 class EventDetailsProvider extends ChangeNotifier {
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -560,6 +561,70 @@ class EventDetailsProvider extends ChangeNotifier {
 
 
 
+
+  List<ClosedEventModel> closedEventsList = [];
+  bool isLoadingClosedEvents = false;
+
+  Future<void> fetchClosedEvents({DateTime? date}) async {
+    isLoadingClosedEvents = true;
+    notifyListeners();
+
+    Query query = db
+        .collection('EVENTS')
+        .where('WORK_ACTIVE_STATUS', isEqualTo: 'CLOSED');
+
+    if (date != null) {
+      final start = DateTime(date.year, date.month, date.day);
+      final end = start.add(const Duration(days: 1));
+
+      query = query
+          .where(
+        'CLOSED_TIME',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+      )
+          .where(
+        'CLOSED_TIME',
+        isLessThan: Timestamp.fromDate(end),
+      );
+    }
+
+    final result = await query
+        .orderBy('CLOSED_TIME', descending: true)
+        .get();
+    closedEventsList = result.docs
+        .where((e) => e.data() != null)
+        .map(
+          (e) => ClosedEventModel.fromMap(
+        Map<String, dynamic>.from(e.data() as Map),
+      ),
+    )
+        .toList();
+
+
+    isLoadingClosedEvents = false;
+    notifyListeners();
+  }
+
+  DateTime? selectedDate;
+  Future<void> pickDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      selectedDate = picked;
+      fetchClosedEvents(date: picked);
+    }
+  }
+
+  ClosedEventModel? closedEventModel;
+  void setClosedEventModelData(ClosedEventModel data){
+    closedEventModel = data;
+    notifyListeners();
+  }
 
 }
 

@@ -1,4 +1,5 @@
 
+import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
 import 'package:cateryyx/Manager/Screens/update_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -110,7 +111,7 @@ class ManagerMenuScreen extends StatelessWidget {
                   title: "Completed Works",
                   subtitle: "Finished job details",
                   onTap: () {
-                    context.read<ManagerProvider>().fetchClosedEvents();
+                    context.read<EventDetailsProvider>().fetchClosedEvents();
                     callNext(ClosedEventsScreen(), context);
                   },
                 ),

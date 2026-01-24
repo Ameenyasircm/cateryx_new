@@ -356,7 +356,7 @@ class ManagerProvider extends ChangeNotifier{
       for (var doc in snapshot.docs) {
         upcomingEventsList.add(EventModel.fromMap(doc.data()));
       }
-      print(upcomingEventsList.length.toString()+' FRNFRJKF ');
+      print('${upcomingEventsList.length} FRNFRJKF ');
     } catch (e) {
       debugPrint("Fetch Events Error: $e");
     }
@@ -562,49 +562,6 @@ class ManagerProvider extends ChangeNotifier{
     runningEventsList.removeWhere((e) => e.eventId == eventId);
     notifyListeners();
   }
-  List<ClosedEventModel> closedEventsList = [];
-  bool isLoadingClosedEvents = false;
-
-  Future<void> fetchClosedEvents({DateTime? date}) async {
-    isLoadingClosedEvents = true;
-    notifyListeners();
-
-    Query query = db
-        .collection('EVENTS')
-        .where('WORK_ACTIVE_STATUS', isEqualTo: 'CLOSED');
-
-    if (date != null) {
-      final start = DateTime(date.year, date.month, date.day);
-      final end = start.add(const Duration(days: 1));
-
-      query = query
-          .where(
-        'CLOSED_TIME',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(start),
-      )
-          .where(
-        'CLOSED_TIME',
-        isLessThan: Timestamp.fromDate(end),
-      );
-    }
-
-    final result = await query
-        .orderBy('CLOSED_TIME', descending: true)
-        .get();
-    closedEventsList = result.docs
-        .where((e) => e.data() != null)
-        .map(
-          (e) => ClosedEventModel.fromMap(
-        Map<String, dynamic>.from(e.data() as Map),
-      ),
-    )
-        .toList();
-
-
-    isLoadingClosedEvents = false;
-    notifyListeners();
-  }
-
 
 }
 
