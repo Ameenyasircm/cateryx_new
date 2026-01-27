@@ -9,6 +9,7 @@ import 'package:cateryyx/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../Constants/colors.dart';
 import '../../core/utils/confirm_dialog_utils.dart';
@@ -282,15 +283,68 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           AppSpacing.h20,
 
                           /// Event Details
-                          sectionTitle(''
-                              'Event Details'),
+                          sectionTitle('Event Details'),
                           detailCard(children: [
                             detailRow('Description', provider.eventModel!.description),
                             divider(),
+
                             detailRow('Boys Required', provider.eventModel!.boysRequired.toString()),
+                            divider(),
+
+                            /// 👉 Client Name
+                            detailRow('Client Name', provider.eventModel!.clientName),
+                            divider(),
+
+                            /// 👉 Client Phone
+                            detailRow('Client Phone', provider.eventModel!.clientPhone),
+                            divider(),
+
+                            /// 👉 CALL + WHATSAPP Buttons
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // CALL button
+                                  ElevatedButton.icon(
+                                    onPressed: provider.eventModel!.clientPhone.isEmpty
+                                        ? null
+                                        : () {
+                                      final phone = provider.eventModel!.clientPhone;
+                                      launchUrl(Uri.parse("tel:$phone"));
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                    ),
+                                    icon: const Icon(Icons.call, color: Colors.white),
+                                    label: const Text("Call", style: TextStyle(color: Colors.white)),
+                                  ),
+
+                                  // WHATSAPP button
+                                  ElevatedButton.icon(
+                                    onPressed: provider.eventModel!.clientPhone.isEmpty
+                                        ? null
+                                        : () {
+                                      final phone = provider.eventModel!.clientPhone;
+                                      launchUrl(Uri.parse("https://wa.me/$phone"));
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.teal,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                    ),
+                                    icon:   Image.asset('assets/whsp.png',
+                                        color: Colors.white, scale: 12),
+                                    label: const Text("WhatsApp", style: TextStyle(color: Colors.white)),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                             divider(),
                             detailRow('Status', provider.eventModel!.status),
                           ]),
+
 
                           AppSpacing.h20,
                         ],

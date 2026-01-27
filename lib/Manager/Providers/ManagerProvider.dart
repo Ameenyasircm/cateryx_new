@@ -34,6 +34,8 @@ class ManagerProvider extends ChangeNotifier{
   final TextEditingController descController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController boysController = TextEditingController();
+  final TextEditingController clientNameController = TextEditingController();
+  final TextEditingController clientPhoneController = TextEditingController();
   DateTime? eventDateTime;
   String selectedMeal = 'Lunch';
 
@@ -77,6 +79,9 @@ class ManagerProvider extends ChangeNotifier{
     descController.clear();
     locationController.clear();
     boysController.clear();
+    clientNameController.clear();
+    clientPhoneController.clear();
+    notifyListeners();
   }
 
   double? latitude;
@@ -153,7 +158,6 @@ class ManagerProvider extends ChangeNotifier{
         "EVENT_ID": eventId,
         "EVENT_NAME": eventName,
 
-        /// 👇 BOTH FORMATS
         "EVENT_DATE": dateController.text.trim(),
         "EVENT_DATE_TS": Timestamp.fromDate(eventDateTime!),
 
@@ -164,17 +168,20 @@ class ManagerProvider extends ChangeNotifier{
         "LONGITUDE": longitude,
         "BOYS_REQUIRED": int.parse(boysController.text),
         "DESCRIPTION": descController.text.trim(),
-        "STATUS": "CREATED",
-        "CREATED_TIME": FieldValue.serverTimestamp(),
 
-        /// 👇 Publish Status
+        /// 👉 NEW FIELDS
+        "CLIENT_NAME": clientNameController.text.trim(),
+        "CLIENT_PHONE": clientPhoneController.text.trim(),
+
         "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
         "EVENT_STATUS":
         publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
 
-        /// 👇 Final merged keywords
+        "CREATED_TIME": FieldValue.serverTimestamp(),
+
         "SEARCH_KEYWORDS": finalKeywords,
       });
+
 
       Navigator.pop(context);
 
@@ -191,7 +198,11 @@ class ManagerProvider extends ChangeNotifier{
     }
   }
 
-  Future<void> editEventFun(BuildContext context, String eventId,EventDetailsProvider eventProvider) async {
+  Future<void> editEventFun(
+      BuildContext context,
+      String eventId,
+      EventDetailsProvider eventProvider,
+      ) async {
     try {
       final eventRef = db.collection("EVENTS").doc(eventId);
 
@@ -208,10 +219,8 @@ class ManagerProvider extends ChangeNotifier{
       // =================================================
       if (boysTaken) {
         await eventRef.set({
-          // ❌ event name NOT updated
-          // ❌ event date NOT updated
-          // ❌ event_date_ts NOT updated
-          // ❌ keywords NOT regenerated
+          // ❌ Event name NOT updated
+          // ❌ Event date NOT updated
 
           "MEAL_TYPE": selectedMeal,
           "LOCATION_NAME": locationController.text.trim(),
@@ -220,6 +229,10 @@ class ManagerProvider extends ChangeNotifier{
           "BOYS_REQUIRED": int.parse(boysController.text),
           "DESCRIPTION": descController.text.trim(),
 
+          /// 👉 NEW FIELDS (Still allowed to edit)
+          "CLIENT_NAME": clientNameController.text.trim(),
+          "CLIENT_PHONE": clientPhoneController.text.trim(),
+
           "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
           "EVENT_STATUS":
           publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
@@ -227,8 +240,9 @@ class ManagerProvider extends ChangeNotifier{
           "UPDATED_TIME": FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        eventProvider.   fetchSingleEvent(eventId);
+        eventProvider.fetchSingleEvent(eventId);
         finish(context);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -236,7 +250,6 @@ class ManagerProvider extends ChangeNotifier{
             ),
           ),
         );
-
 
         return;
       }
@@ -248,7 +261,7 @@ class ManagerProvider extends ChangeNotifier{
       final String eventName = nameController.text.trim();
       final String location = locationController.text.trim();
 
-      // 🔥 REGENERATE SEARCH KEYWORDS
+      // 🔥 Keyword regeneration
       List<String> eventKeywords = generateKeywords(eventName);
       if (eventName.contains(" ")) {
         for (var w in eventName.split(" ")) {
@@ -268,7 +281,9 @@ class ManagerProvider extends ChangeNotifier{
         ...locationKeywords,
       }.toList();
 
-      // FULL UPDATE
+      // =================================================
+      // 🔥 FULL UPDATE
+      // =================================================
       await eventRef.set({
         "EVENT_NAME": eventName,
         "EVENT_DATE": dateController.text.trim(),
@@ -282,16 +297,21 @@ class ManagerProvider extends ChangeNotifier{
         "BOYS_REQUIRED": int.parse(boysController.text),
         "DESCRIPTION": descController.text.trim(),
 
+        /// 👉 NEW FIELDS
+        "CLIENT_NAME": clientNameController.text.trim(),
+        "CLIENT_PHONE": clientPhoneController.text.trim(),
+
         "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
         "EVENT_STATUS":
         publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
 
         "SEARCH_KEYWORDS": finalKeywords,
-
         "UPDATED_TIME": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      eventProvider.   fetchSingleEvent(eventId);
+
+      eventProvider.fetchSingleEvent(eventId);
       finish(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Event updated successfully")),
       );
@@ -308,6 +328,7 @@ class ManagerProvider extends ChangeNotifier{
   Future<void> loadEventForEdit(String eventId) async {
     final eventRef = db.collection("EVENTS").doc(eventId);
 
+    // Check if boys have taken the work → lock some fields
     final boysSnap =
     await eventRef.collection("CONFIRMED_BOYS").limit(1).get();
     lockNameAndDate = boysSnap.docs.isNotEmpty;
@@ -319,12 +340,17 @@ class ManagerProvider extends ChangeNotifier{
     dateController.text = data["EVENT_DATE"];
     selectedMeal = data["MEAL_TYPE"];
     locationController.text = data["LOCATION_NAME"];
+
     latitude = data["LATITUDE"];
     longitude = data["LONGITUDE"];
     boysController.text = data["BOYS_REQUIRED"].toString();
     descController.text = data["DESCRIPTION"];
 
-    // 🚀 IMPORTANT FIX — Set DateTime value for edit mode
+    // 👉 NEW FIELDS (Safe access)
+    clientNameController.text = data["CLIENT_NAME"] ?? "";
+    clientPhoneController.text = data["CLIENT_PHONE"] ?? "";
+
+    // Set actual DateTime from Timestamp
     if (data["EVENT_DATE_TS"] != null) {
       eventDateTime = (data["EVENT_DATE_TS"] as Timestamp).toDate();
     }

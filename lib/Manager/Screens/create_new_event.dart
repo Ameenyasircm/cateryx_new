@@ -76,6 +76,23 @@ class CreateEventScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 15),
+                  _label("Client Name"),
+                  _textField(
+                    provider.clientNameController,
+                    "Enter client name",
+                    Icons.person,
+                  ),
+
+                  const SizedBox(height: 15),
+                  _label("Client Phone"),
+                  _textField(
+                    provider.clientPhoneController,
+                    "Enter client phone number",
+                    Icons.phone,
+                    keyboard: TextInputType.phone,
+                  ),
+
+                  const SizedBox(height: 15),
 
                   _label("Select Meal Type"),
                   DropdownButtonFormField<String>(
