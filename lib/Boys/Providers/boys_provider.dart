@@ -23,6 +23,7 @@ class BoysProvider extends ChangeNotifier{
   TextEditingController addressController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
+  TextEditingController wageController = TextEditingController();
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
 
@@ -145,6 +146,22 @@ class BoysProvider extends ChangeNotifier{
         "SEARCH_KEYWORDS": finalKeywords,
       };
 
+      // -------------------------------------------------------
+      // 🔥 ADD WAGE (Manager gives real wage, others = 0)
+      // -------------------------------------------------------
+      if (from == "MANAGER") {
+        final wage = wageController.text.trim().isEmpty
+            ? 0
+            : double.tryParse(wageController.text.trim()) ?? 0;
+
+        map["WAGE"] = wage;
+      } else {
+        map["WAGE"] = 0;
+      }
+
+      // -------------------------------------------------------
+      // 🔥 APPROVAL LOGIC
+      // -------------------------------------------------------
       if (from == 'MANAGER') {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String? adminName = prefs.getString('adminName');
@@ -164,6 +181,9 @@ class BoysProvider extends ChangeNotifier{
         });
       }
 
+      // -------------------------------------------------------
+      // 🔥 SAVE TO FIRESTORE
+      // -------------------------------------------------------
       await db.collection("BOYS").doc(boyId).set(map);
       Navigator.pop(context);
 
@@ -179,8 +199,8 @@ class BoysProvider extends ChangeNotifier{
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Center(
-                child:
-                Text("Registered successfully, Pending Admin Approval")),
+              child: Text("Registered successfully, Pending Admin Approval"),
+            ),
           ),
         );
       }
@@ -294,6 +314,7 @@ class BoysProvider extends ChangeNotifier{
   void clearBoyForm() {
     boyNameController.clear();
     phoneController.clear();
+    wageController.clear();
     guardianController.clear();
     dobController.clear();
     placeController.clear();

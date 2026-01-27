@@ -11,6 +11,7 @@ class RegisterBoyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('$registeredBy KRFRKJFNRKF ');
     const primaryBlue = Color(0xff1A237E);
     const primaryOrange = Color(0xffE65100);
 
@@ -57,6 +58,17 @@ class RegisterBoyScreen extends StatelessWidget {
                     keyboard: TextInputType.phone,
                     maxLength: 10,
                   ),
+
+                  if (registeredBy == "MANAGER") ...[
+                    const SizedBox(height: 15),
+                    _label("Wage (Manager Entry)"),
+                    _textField(
+                      provider.wageController,
+                      "Enter wage amount",
+                      Icons.currency_rupee,
+                      keyboard: TextInputType.number,
+                    ),
+                  ],
 
                   const SizedBox(height: 15),
 
