@@ -26,7 +26,7 @@ class ClosedEventsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         backgroundColor:blue7E,
-        title:  Text('Closed Events',style: AppTypography.body1.copyWith(
+        title:  Text('Completed Events',style: AppTypography.body1.copyWith(
             color: Colors.white
         ),),
         actions: [

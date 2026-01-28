@@ -1,5 +1,6 @@
 
 import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
+import 'package:cateryyx/Manager/Screens/payment_report_screen.dart';
 import 'package:cateryyx/Manager/Screens/update_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -95,7 +96,10 @@ class ManagerMenuScreen extends StatelessWidget {
                   icon: Icons.payment_rounded,
                   title: "Payment Report",
                   subtitle: "View all payments",
-                  onTap: () {},
+                  onTap: () {
+                    managerProvider.clearFilters();
+                    callNext(ManagerPaymentReportScreen(), context);
+                  },
                 ),
                 _menuTile(
                   icon: Icons.group_add_rounded,

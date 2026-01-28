@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
 import '../Models/closed_event_model.dart';
+import '../Models/payment_report_model.dart';
 
 class EventDetailsProvider extends ChangeNotifier {
   final FirebaseFirestore db = FirebaseFirestore.instance;
@@ -132,39 +133,127 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+///  commented by yasar
+
+  // Future<void> saveBoyPayment({
+  //   required String eventId,
+  //   required String boyId,
+  //   required double amount,
+  // }) async {
+  //   await db
+  //       .collection('EVENTS')
+  //       .doc(eventId)
+  //       .collection('CONFIRMED_BOYS')
+  //       .doc(boyId)
+  //       .update({
+  //     'PAYMENT_AMOUNT': amount,
+  //     'PAYMENT_UPDATED_AT': Timestamp.now(),
+  //   });
+  //
+  //   await db
+  //       .collection('BOYS')
+  //       .doc(boyId)
+  //       .collection('CONFIRMED_WORKS')
+  //       .doc(eventId)
+  //       .update({
+  //     'PAYMENT_AMOUNT': amount,
+  //     'PAYMENT_UPDATED_AT': Timestamp.now(),
+  //   });
+  //
+  //   final index =
+  //   confirmedBoysList.indexWhere((e) => e.boyId == boyId);
+  //
+  //   confirmedBoysList[index] =
+  //       confirmedBoysList[index].copyWith(paymentAmount: amount);
+  //
+  //   notifyListeners();
+  // }
+
   Future<void> saveBoyPayment({
     required String eventId,
     required String boyId,
     required double amount,
   }) async {
-    await db
-        .collection('EVENTS')
+    final now = Timestamp.now();
+
+    // ✅ 1) Fetch event details (EVENT_NAME, EVENT_DATE, LOCATION_NAME)
+    final eventDoc = await db.collection("EVENTS").doc(eventId).get();
+    final eventData = eventDoc.data() ?? {};
+
+    final String eventName = eventData["EVENT_NAME"] ?? "";
+    final String eventDate = eventData["EVENT_DATE"] ?? "";
+    final String locationName = eventData["LOCATION_NAME"] ?? "";
+
+    // ✅ 2) Fetch boy details (BOY_NAME, BOY_PHONE)
+    // you can get boy details from EVENTS/CONFIRMED_BOYS also.
+    final boyDoc = await db
+        .collection("EVENTS")
         .doc(eventId)
-        .collection('CONFIRMED_BOYS')
+        .collection("CONFIRMED_BOYS")
         .doc(boyId)
-        .update({
-      'PAYMENT_AMOUNT': amount,
-      'PAYMENT_UPDATED_AT': Timestamp.now(),
-    });
+        .get();
 
-    await db
-        .collection('BOYS')
-        .doc(boyId)
-        .collection('CONFIRMED_WORKS')
-        .doc(eventId)
-        .update({
-      'PAYMENT_AMOUNT': amount,
-      'PAYMENT_UPDATED_AT': Timestamp.now(),
-    });
+    final boyData = boyDoc.data() ?? {};
 
-    final index =
-    confirmedBoysList.indexWhere((e) => e.boyId == boyId);
+    final String boyName = boyData["BOY_NAME"] ?? "";
+    final String boyPhone = boyData["BOY_PHONE"] ?? "";
 
-    confirmedBoysList[index] =
-        confirmedBoysList[index].copyWith(paymentAmount: amount);
+    // ✅ 3) Create PAYMENT_REPORT history record (NEW doc each payment)
+    final paymentRef = db.collection("PAYMENTS_REPORT").doc(); // auto doc id
+
+    final reportModel = PaymentReportModel(
+      paymentId: paymentRef.id,
+      eventId: eventId,
+      boyId: boyId,
+      eventName: eventName,
+      eventDate: eventDate,
+      locationName: locationName,
+      boyName: boyName,
+      boyPhone: boyPhone,
+      paymentAmount: amount,
+      paymentUpdatedAt: DateTime.now(),
+    );
+
+    // ✅ 4) Batch commit for production safety
+    final batch = db.batch();
+
+    // update in EVENTS
+    batch.update(
+      db
+          .collection("EVENTS")
+          .doc(eventId)
+          .collection("CONFIRMED_BOYS")
+          .doc(boyId),
+      {
+        "PAYMENT_AMOUNT": amount,
+        "PAYMENT_UPDATED_AT": now,
+      },
+    );
+
+    // update in BOYS
+    batch.update(
+      db.collection("BOYS").doc(boyId).collection("CONFIRMED_WORKS").doc(eventId),
+      {
+        "PAYMENT_AMOUNT": amount,
+        "PAYMENT_UPDATED_AT": now,
+      },
+    );
+
+    // ✅ insert history doc in PAYMENT_REPORT
+    batch.set(paymentRef, reportModel.toMap());
+
+    await batch.commit();
+
+    // ✅ Local list update
+    final index = confirmedBoysList.indexWhere((e) => e.boyId == boyId);
+    if (index != -1) {
+      confirmedBoysList[index] =
+          confirmedBoysList[index].copyWith(paymentAmount: amount);
+    }
 
     notifyListeners();
   }
+
 
   Future<void> updateWorkActiveStatus({
     required String eventId,

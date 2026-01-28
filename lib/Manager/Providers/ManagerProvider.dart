@@ -11,6 +11,7 @@ import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Models/BoysRequestModel.dart';
 import '../Models/closed_event_model.dart';
 import '../Models/event_model.dart';
+import '../Models/payment_report_model.dart';
 import '../Screens/LoginScreen.dart';
 
 class ManagerProvider extends ChangeNotifier{
@@ -587,6 +588,188 @@ class ManagerProvider extends ChangeNotifier{
 
     runningEventsList.removeWhere((e) => e.eventId == eventId);
     notifyListeners();
+  }
+
+
+
+  final List<PaymentReportModel> reportList = [];        // filtered list for UI
+  final List<PaymentReportModel> _allReportList = [];    // full list backup
+
+
+
+  bool loading = false;
+  bool loadingMore = false;
+  bool hasMore = true;
+
+  final int limit = 20;
+  DocumentSnapshot? lastDoc;
+
+  // ✅ Filters
+  DateTime? fromDate;
+  DateTime? toDate;
+  String searchText = "";
+
+  void applyLocalSearch(String value) {
+    searchText = value.trim();
+
+    if (searchText.isEmpty) {
+      reportList
+        ..clear()
+        ..addAll(_allReportList);
+      notifyListeners();
+      return;
+    }
+
+    final search = searchText.toLowerCase();
+
+    reportList
+      ..clear()
+      ..addAll(
+        _allReportList.where((m) {
+          final name = m.boyName.toLowerCase();
+          final phone = m.boyPhone.toLowerCase();
+          return name.contains(search) || phone.contains(search);
+        }).toList(),
+      );
+
+    notifyListeners();
+  }
+
+
+  // ✅ Set date range
+  void setDateRange({DateTime? from, DateTime? to}) {
+    fromDate = from;
+    toDate = to;
+    fetchFirstPage();
+  }
+
+  void clearFilters() {
+    fromDate = null;
+    toDate = null;
+    searchText = "";
+    fetchFirstPage();
+  }
+
+  // ✅ Firestore query based on filters
+  Query _getQuery() {
+    Query query = db
+        .collection("PAYMENTS_REPORT")
+        .orderBy("PAYMENT_UPDATED_AT", descending: true);
+
+    // ✅ Date range filter
+    if (fromDate != null) {
+      query = query.where(
+        "PAYMENT_UPDATED_AT",
+        isGreaterThanOrEqualTo: Timestamp.fromDate(
+          DateTime(fromDate!.year, fromDate!.month, fromDate!.day, 0, 0, 0),
+        ),
+      );
+    }
+
+    if (toDate != null) {
+      query = query.where(
+        "PAYMENT_UPDATED_AT",
+        isLessThanOrEqualTo: Timestamp.fromDate(
+          DateTime(toDate!.year, toDate!.month, toDate!.day, 23, 59, 59),
+        ),
+      );
+    }
+
+    // ✅ Search (prefix)
+    if (searchText.isNotEmpty) {
+      final bool isPhone = RegExp(r'^[0-9]+$').hasMatch(searchText);
+
+      if (isPhone) {
+        // phone search
+        query = query
+            .orderBy("BOY_PHONE")
+            .where("BOY_PHONE", isGreaterThanOrEqualTo: searchText)
+            .where("BOY_PHONE", isLessThanOrEqualTo: "$searchText\uf8ff");
+      } else {
+        // name search (recommended: store BOY_NAME uppercase in firestore)
+        final String name = searchText.toUpperCase();
+
+        query = query
+            .orderBy("BOY_NAME")
+            .where("BOY_NAME", isGreaterThanOrEqualTo: name)
+            .where("BOY_NAME", isLessThanOrEqualTo: "$name\uf8ff");
+      }
+    }
+
+    return query;
+  }
+
+  Future<void> fetchFirstPage() async {
+    loading = true;
+
+    reportList.clear();
+    _allReportList.clear();
+
+    lastDoc = null;
+    hasMore = true;
+    notifyListeners();
+
+    try {
+      final query = db
+          .collection("PAYMENTS_REPORT")
+          .orderBy("PAYMENT_UPDATED_AT", descending: true)
+          .limit(limit);
+
+      final snap = await query.get();
+      if (snap.docs.isNotEmpty) lastDoc = snap.docs.last;
+
+      final data = snap.docs.map((e) => PaymentReportModel.fromDoc(e)).toList();
+
+      _allReportList.addAll(data);
+      reportList.addAll(data);
+
+      hasMore = snap.docs.length == limit;
+
+    } catch (e) {
+      debugPrint("fetchFirstPage error: $e");
+    }
+
+    loading = false;
+    notifyListeners();
+  }
+
+
+  Future<void> fetchMore() async {
+    if (!hasMore || loadingMore || lastDoc == null) return;
+
+    loadingMore = true;
+    notifyListeners();
+
+    try {
+      final query = db
+          .collection("PAYMENTS_REPORT")
+          .orderBy("PAYMENT_UPDATED_AT", descending: true)
+          .startAfterDocument(lastDoc!)
+          .limit(limit);
+
+      final snap = await query.get();
+      if (snap.docs.isNotEmpty) lastDoc = snap.docs.last;
+
+      final data = snap.docs.map((e) => PaymentReportModel.fromDoc(e)).toList();
+
+      _allReportList.addAll(data);
+
+      // ✅ apply search again after loading more
+      applyLocalSearch(searchText);
+
+      hasMore = snap.docs.length == limit;
+    } catch (e) {
+      debugPrint("fetchMore error: $e");
+    }
+
+    loadingMore = false;
+    notifyListeners();
+  }
+
+
+  String formatDateTime(DateTime? inputDate) {
+    if (inputDate == null) return " ";
+    return DateFormat('dd MMM yy hh:mm a').format(inputDate);
   }
 
 }
