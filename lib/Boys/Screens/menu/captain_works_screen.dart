@@ -50,7 +50,9 @@ class CaptainEventsScreen extends StatelessWidget {
 
               return InkWell(
                 onTap: () {
+                  provider.fetchConfirmedBoys(event.eventId);
                   provider.setEventModelData(event);
+                  provider.fetchSiteCaptain(event.eventId);
                   callNext(
                     EventDetailedScreen(eventID: event.eventId),
                     context,
