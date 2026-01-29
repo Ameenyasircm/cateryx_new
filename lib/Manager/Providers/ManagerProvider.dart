@@ -516,18 +516,19 @@ class ManagerProvider extends ChangeNotifier{
   }
 
 
-    Future<void> updateBoyStatus(String docId, String status) async {
-      await FirebaseFirestore.instance
-          .collection('BOYS')
-          .doc(docId)
-          .update({
-        'STATUS': status,
-        'APPROVED_TIME': FieldValue.serverTimestamp(),
-      });
+  Future<void> updateBoyStatus(String docId, String status, double wage) async {
+    await FirebaseFirestore.instance
+        .collection('BOYS')
+        .doc(docId)
+        .update({
+      'STATUS': status,
+      'WAGE': wage, // number stored in DB
+      'APPROVED_TIME': FieldValue.serverTimestamp(),
+    });
 
-      pendingBoysList.removeWhere((e) => e.docId == docId);
-      notifyListeners();
-    }
+    pendingBoysList.removeWhere((e) => e.docId == docId);
+    notifyListeners();
+  }
   /// boy work history
   bool isLoadingWrkHistory = true;
   List<Map<String, dynamic>> workHistory = [];

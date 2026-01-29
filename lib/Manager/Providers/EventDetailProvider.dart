@@ -790,6 +790,33 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  List<EventModel> captainEventsList = [];
+  bool isCaptainLoading = false;
+
+  Future<void> fetchCaptainEvents(String captainId) async {
+    captainEventsList.clear();
+    isCaptainLoading = true;
+    notifyListeners();
+
+    try {
+      final snapshot = await db
+          .collection("EVENTS")
+          .where("SITE_CAPTAIN_ID", isEqualTo: captainId)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        captainEventsList.add(EventModel.fromMap(doc.data()));
+      }
+    } catch (e) {
+      debugPrint("Fetch Captain Events Error: $e");
+    }
+
+    isCaptainLoading = false;
+    notifyListeners();
+  }
+
+
 }
 
 

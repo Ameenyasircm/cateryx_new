@@ -65,6 +65,7 @@ class BoysRequestScreen extends StatelessWidget {
 
   void _showBoyDetails(BuildContext context, BoyRequestModel doc) {
     final provider = context.read<ManagerProvider>();
+    final TextEditingController wageController = TextEditingController();
 
     showDialog(
       context: context,
@@ -98,6 +99,23 @@ class BoysRequestScreen extends StatelessWidget {
                 _detailRow("Place", doc.place),
                 _detailRow("District", doc.district),
                 _detailRow("Pin Code", doc.pinCode),
+
+                const SizedBox(height: 16),
+                const Text(
+                  "Wage (₹)",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: wageController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: "Enter wage",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -105,7 +123,7 @@ class BoysRequestScreen extends StatelessWidget {
           actions: [
             OutlinedButton(
               onPressed: () async {
-                await provider.updateBoyStatus(doc.docId, "REJECTED");
+                await provider.updateBoyStatus(doc.docId, "REJECTED",0);
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
@@ -113,9 +131,21 @@ class BoysRequestScreen extends StatelessWidget {
               ),
               child: const Text("Reject"),
             ),
+
             ElevatedButton(
               onPressed: () async {
-                await provider.updateBoyStatus(doc.docId, "APPROVED");
+                final wageText = wageController.text.trim();
+                if (wageText.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Please enter wage")),
+                  );
+                  return;
+                }
+
+                final double wage = double.tryParse(wageText) ?? 0;
+
+                await provider.updateBoyStatus(doc.docId, "APPROVED", wage);
+
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
