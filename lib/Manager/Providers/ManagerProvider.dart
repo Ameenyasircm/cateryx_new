@@ -650,56 +650,8 @@ class ManagerProvider extends ChangeNotifier{
     fetchFirstPage();
   }
 
-  // ✅ Firestore query based on filters
-  Query _getQuery() {
-    Query query = db
-        .collection("PAYMENTS_REPORT")
-        .orderBy("PAYMENT_UPDATED_AT", descending: true);
 
-    // ✅ Date range filter
-    if (fromDate != null) {
-      query = query.where(
-        "PAYMENT_UPDATED_AT",
-        isGreaterThanOrEqualTo: Timestamp.fromDate(
-          DateTime(fromDate!.year, fromDate!.month, fromDate!.day, 0, 0, 0),
-        ),
-      );
-    }
-
-    if (toDate != null) {
-      query = query.where(
-        "PAYMENT_UPDATED_AT",
-        isLessThanOrEqualTo: Timestamp.fromDate(
-          DateTime(toDate!.year, toDate!.month, toDate!.day, 23, 59, 59),
-        ),
-      );
-    }
-
-    // ✅ Search (prefix)
-    if (searchText.isNotEmpty) {
-      final bool isPhone = RegExp(r'^[0-9]+$').hasMatch(searchText);
-
-      if (isPhone) {
-        // phone search
-        query = query
-            .orderBy("BOY_PHONE")
-            .where("BOY_PHONE", isGreaterThanOrEqualTo: searchText)
-            .where("BOY_PHONE", isLessThanOrEqualTo: "$searchText\uf8ff");
-      } else {
-        // name search (recommended: store BOY_NAME uppercase in firestore)
-        final String name = searchText.toUpperCase();
-
-        query = query
-            .orderBy("BOY_NAME")
-            .where("BOY_NAME", isGreaterThanOrEqualTo: name)
-            .where("BOY_NAME", isLessThanOrEqualTo: "$name\uf8ff");
-      }
-    }
-
-    return query;
-  }
-
-  Future<void> fetchFirstPage() async {
+  Future<void> fetchFirstPage({String? boyId}) async {
     loading = true;
 
     reportList.clear();
@@ -710,10 +662,23 @@ class ManagerProvider extends ChangeNotifier{
     notifyListeners();
 
     try {
-      final query = db
+      Query query = db
           .collection("PAYMENTS_REPORT")
           .orderBy("PAYMENT_UPDATED_AT", descending: true)
           .limit(limit);
+
+      // ✅ If Boy module => filter only boyId
+      if (boyId != null && boyId.isNotEmpty) {
+        query = query.where("BOY_ID", isEqualTo: boyId);
+      }
+
+      // ✅ Date Filter (Optional)
+      if (fromDate != null && toDate != null) {
+        query = query
+            .where("PAYMENT_UPDATED_AT", isGreaterThanOrEqualTo: Timestamp.fromDate(fromDate!))
+            .where("PAYMENT_UPDATED_AT", isLessThanOrEqualTo: Timestamp.fromDate(
+            DateTime(toDate!.year, toDate!.month, toDate!.day, 23, 59, 59)));
+      }
 
       final snap = await query.get();
       if (snap.docs.isNotEmpty) lastDoc = snap.docs.last;
@@ -724,7 +689,6 @@ class ManagerProvider extends ChangeNotifier{
       reportList.addAll(data);
 
       hasMore = snap.docs.length == limit;
-
     } catch (e) {
       debugPrint("fetchFirstPage error: $e");
     }
@@ -734,18 +698,23 @@ class ManagerProvider extends ChangeNotifier{
   }
 
 
-  Future<void> fetchMore() async {
+
+  Future<void> fetchMore({String? boyId}) async {
     if (!hasMore || loadingMore || lastDoc == null) return;
 
     loadingMore = true;
     notifyListeners();
 
     try {
-      final query = db
+      Query query = db
           .collection("PAYMENTS_REPORT")
           .orderBy("PAYMENT_UPDATED_AT", descending: true)
           .startAfterDocument(lastDoc!)
           .limit(limit);
+
+      if (boyId != null && boyId.isNotEmpty) {
+        query = query.where("BOY_ID", isEqualTo: boyId);
+      }
 
       final snap = await query.get();
       if (snap.docs.isNotEmpty) lastDoc = snap.docs.last;
@@ -754,7 +723,6 @@ class ManagerProvider extends ChangeNotifier{
 
       _allReportList.addAll(data);
 
-      // ✅ apply search again after loading more
       applyLocalSearch(searchText);
 
       hasMore = snap.docs.length == limit;
@@ -765,6 +733,7 @@ class ManagerProvider extends ChangeNotifier{
     loadingMore = false;
     notifyListeners();
   }
+
 
 
   String formatDateTime(DateTime? inputDate) {

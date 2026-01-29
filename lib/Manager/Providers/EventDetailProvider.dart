@@ -60,6 +60,36 @@ class EventDetailsProvider extends ChangeNotifier {
       debugPrint("❌ Map launch error: $e");
     }
   }
+  Future<void> openGoogleMapDirection({
+    required double destLat,
+    required double destLng,
+  }) async {
+    if (destLat == 0 || destLng == 0) {
+      debugPrint("❌ Invalid destination coordinates");
+      return;
+    }
+
+    final Uri googleMapUri = Uri.parse(
+      "https://www.google.com/maps/dir/?api=1"
+          "&origin=Current+Location"
+          "&destination=$destLat,$destLng"
+          "&travelmode=driving",
+    );
+
+    try {
+      if (await canLaunchUrl(googleMapUri)) {
+        await launchUrl(
+          googleMapUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        debugPrint("❌ Could not launch Google Maps");
+      }
+    } catch (e) {
+      debugPrint("❌ Map launch error: $e");
+    }
+  }
+
 
   List<ConfirmedBoyModel> confirmedBoysList = [];
 
@@ -694,8 +724,48 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> fetchClosedEventsForBoy(String boyId,{DateTime? date}) async {
+    isLoadingClosedEvents = true;
+    notifyListeners();
+
+    Query query = db
+        .collection('BOYS').doc(boyId).collection('CONFIRMED_WORKS')
+        .where('WORK_ACTIVE_STATUS', isEqualTo: 'CLOSED');
+
+    if (date != null) {
+      final start = DateTime(date.year, date.month, date.day);
+      final end = start.add(const Duration(days: 1));
+
+      query = query
+          .where(
+        'CLOSED_TIME',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+      )
+          .where(
+        'CLOSED_TIME',
+        isLessThan: Timestamp.fromDate(end),
+      );
+    }
+
+    final result = await query
+        .orderBy('CLOSED_TIME', descending: true)
+        .get();
+    closedEventsList = result.docs
+        .where((e) => e.data() != null)
+        .map(
+          (e) => ClosedEventModel.fromMap(
+        Map<String, dynamic>.from(e.data() as Map),
+      ),
+    )
+        .toList();
+
+
+    isLoadingClosedEvents = false;
+    notifyListeners();
+  }
+
   DateTime? selectedDate;
-  Future<void> pickDate(BuildContext context) async {
+  Future<void> pickDate(BuildContext context,String fromWhere,String boyId) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: selectedDate ?? DateTime.now(),
@@ -705,7 +775,12 @@ class EventDetailsProvider extends ChangeNotifier {
 
     if (picked != null) {
       selectedDate = picked;
-      fetchClosedEvents(date: picked);
+      if(fromWhere=='boy'){
+        fetchClosedEventsForBoy(boyId,date: picked);
+      }else{
+        fetchClosedEvents(date: picked);
+      }
+
     }
   }
 

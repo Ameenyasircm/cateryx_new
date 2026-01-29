@@ -1,4 +1,5 @@
 import 'package:cateryyx/Manager/Providers/ManagerProvider.dart';
+import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,17 +7,12 @@ import '../../Constants/colors.dart';
 import '../../core/theme/app_typography.dart';
 
 class ManagerPaymentReportScreen extends StatelessWidget {
-  const ManagerPaymentReportScreen({super.key});
+  final String fromWhere;
+  final String? boyId;
+  const ManagerPaymentReportScreen({super.key,required this.fromWhere,this.boyId});
 
   @override
   Widget build(BuildContext context) {
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   final pro = context.read<ManagerProvider>();
-    //   if (pro.reportList.isEmpty && !pro.loading) {
-    //     pro.fetchFirstPage();
-    //   }
-    // });
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -54,7 +50,7 @@ class ManagerPaymentReportScreen extends StatelessWidget {
               // ✅ load next page when scroll bottom
               if (scrollInfo.metrics.pixels >=
                   scrollInfo.metrics.maxScrollExtent - 100) {
-                pro.fetchMore();
+                pro.fetchMore(boyId:fromWhere == 'boy' ?boyId : null);
               }
               return false;
             },
@@ -79,7 +75,7 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                         },
                       ),
 
-                      const SizedBox(height: 10),
+                      AppSpacing.h10,
 
                       // ✅ Date range row
                       Row(
@@ -149,7 +145,9 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                               columns: [
                                 DataColumn(label: Text("Sl.No", style: headerStyle)),
                                 DataColumn(label: Text("Date Time", style: headerStyle)),
+                                if (fromWhere != "boy")
                                 DataColumn(label: Text("Boy Name", style: headerStyle)),
+                                if (fromWhere != "boy")
                                 DataColumn(label: Text("Boy Phone", style: headerStyle)),
                                 DataColumn(label: Text("Amount", style: headerStyle)),
                                 DataColumn(label: Text("Location", style: headerStyle)),
@@ -165,7 +163,9 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                                     DataCell(Text("${index + 1}", style: rowStyle)),
                                     DataCell(Text(pro.formatDateTime(m.paymentUpdatedAt),
                                         style: rowStyle)),
+                                    if (fromWhere != "boy")
                                     DataCell(Text(m.boyName, style: rowStyle)),
+                                    if (fromWhere != "boy")
                                     DataCell(Text(m.boyPhone, style: rowStyle)),
                                     DataCell(Text(m.paymentAmount.toString(), style: rowStyle)),
                                     DataCell(Text(m.locationName, style: rowStyle)),

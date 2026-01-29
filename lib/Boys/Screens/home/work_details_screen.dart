@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:ui';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import '../../../Manager/Models/event_model.dart';
 import '../../../services/location_service.dart';
 
@@ -17,6 +20,13 @@ class WorkDetailsScreen extends StatefulWidget {
 
 class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
   Position? currentPosition;
+  List<LatLng> polylineCoordinates = [];
+  String currentLocationAddress = "Loading...";
+  // ✅ FREE OpenRouteService API Key (get yours at openrouteservice.org)
+  final String openRouteServiceApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjFlYzMwZTQ1MjEyZTQyZmZhYTlkYzYzMzhlZjEzZDRmIiwiaCI6Im11cm11cjY0In0=";
+
+  GoogleMapController? mapController;
+  bool isPolylineLoading = false;
 
   @override
   void initState() {
@@ -24,6 +34,104 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
     loadLocation();
   }
 
+  // ✅ FREE METHOD using OpenRouteService
+  Future<void> getPolylineOpenRouteService() async {
+    if (currentPosition == null) return;
+
+    setState(() {
+      isPolylineLoading = true;
+      polylineCoordinates.clear();
+    });
+
+    try {
+      final url = Uri.parse(
+          'https://api.openrouteservice.org/v2/directions/driving-car?'
+              'start=${currentPosition!.longitude},${currentPosition!.latitude}&'
+              'end=${widget.work.longitude},${widget.work.latitude}'
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': openRouteServiceApiKey,
+          'Content-Type': 'application/json',
+        },
+      );
+
+      debugPrint("==================");
+      debugPrint("Response Status: ${response.statusCode}");
+      debugPrint("==================");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> coordinates = data['features'][0]['geometry']['coordinates'];
+
+        setState(() {
+          polylineCoordinates = coordinates
+              .map((coord) => LatLng(coord[1], coord[0])) // Note: reversed [lng, lat] to [lat, lng]
+              .toList();
+        });
+
+        debugPrint("✅ SUCCESS: ${polylineCoordinates.length} points loaded");
+      } else {
+        debugPrint("❌ FAILED: ${response.body}");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not load route: ${response.statusCode}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ EXCEPTION: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      isPolylineLoading = false;
+    });
+  }
+
+  Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+
+        // Build a readable address
+        String address = '';
+
+        if (place.street != null && place.street!.isNotEmpty) {
+          address += '${place.street}, ';
+        }
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          address += '${place.subLocality}, ';
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          address += '${place.locality}, ';
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          address += '${place.administrativeArea}';
+        }
+
+        return address.isNotEmpty ? address : 'Unknown location';
+      }
+    } catch (e) {
+      debugPrint("Error getting address: $e");
+    }
+
+    return '$latitude, $longitude';
+  }
   Future<void> loadLocation() async {
     final position = await LocationService.getCurrentLocation();
     if (!mounted) return;
@@ -31,8 +139,12 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
     setState(() {
       currentPosition = position;
     });
+    currentLocationAddress = await getAddressFromCoordinates(
+      currentPosition!.latitude,
+      currentPosition!.longitude,
+    );
+    await getPolylineOpenRouteService();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +153,14 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
       appBar: AppBar(
         title: const Text('Work Details'),
         elevation: 0,
+        actions: [
+          if (currentPosition != null)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: getPolylineOpenRouteService,
+              tooltip: 'Reload Route',
+            ),
+        ],
       ),
       body: currentPosition == null
           ? const Center(child: CircularProgressIndicator())
@@ -50,30 +170,71 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
           SizedBox(
             height: 280,
             width: double.infinity,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                  widget.work.latitude,
-                  widget.work.longitude,
-                ),
-                zoom: 14,
-              ),
-              markers: {
-                Marker(
-                  markerId: const MarkerId('work'),
-                  position: LatLng(
-                    widget.work.latitude,
-                    widget.work.longitude,
+            child: Stack(
+              children: [
+                GoogleMap(
+                  onMapCreated: (controller) {
+                    mapController = controller;
+                  },
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(
+                      widget.work.latitude,
+                      widget.work.longitude,
+                    ),
+                    zoom: 14,
                   ),
+                  markers: {
+                    Marker(
+                      markerId: const MarkerId('work'),
+                      position: LatLng(
+                        widget.work.latitude,
+                        widget.work.longitude,
+                      ),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueRed),
+                      infoWindow: const InfoWindow(title: 'Work Location'),
+                    ),
+                    Marker(
+                      markerId: const MarkerId('me'),
+                      position: LatLng(
+                        currentPosition!.latitude,
+                        currentPosition!.longitude,
+                      ),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueBlue),
+                      infoWindow: const InfoWindow(title: 'Your Location'),
+                    ),
+                  },
+                  polylines: polylineCoordinates.isNotEmpty
+                      ? {
+                    Polyline(
+                      polylineId: const PolylineId("route"),
+                      color: Colors.blue,
+                      width: 5,
+                      points: polylineCoordinates,
+                      geodesic: true,
+                    ),
+                  }
+                      : {},
                 ),
-                Marker(
-                  markerId: const MarkerId('me'),
-                  position: LatLng(
-                    currentPosition!.latitude,
-                    currentPosition!.longitude,
+                if (isPolylineLoading)
+                  Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: Colors.white),
+                          SizedBox(height: 8),
+                          Text(
+                            'Loading route...',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              },
+              ],
             ),
           ),
 
@@ -116,8 +277,8 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                     _infoRow(
                       icon: Icons.location_on,
                       label: 'Work Location',
-                      value:
-                      '${widget.work.latitude}, ${widget.work.longitude}',
+                      value:widget.work.locationName
+                      // '${widget.work.latitude}, ${widget.work.longitude}',
                     ),
 
                     const SizedBox(height: 12),
@@ -125,8 +286,20 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                     _infoRow(
                       icon: Icons.my_location,
                       label: 'Your Location',
-                      value:
-                      '${currentPosition!.latitude}, ${currentPosition!.longitude}',
+                      value:currentLocationAddress
+                      // '${currentPosition!.latitude}, ${currentPosition!.longitude}',
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    _infoRow(
+                      icon: Icons.route,
+                      label: 'Route Status',
+                      value: isPolylineLoading
+                          ? 'Loading...'
+                          : polylineCoordinates.isEmpty
+                          ? 'No route available'
+                          : '✓ Route loaded (${polylineCoordinates.length} points)',
                     ),
                   ],
                 ),
@@ -153,8 +326,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label,
-                  style: const TextStyle(
-                      fontSize: 12, color: Colors.grey)),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
               const SizedBox(height: 2),
               Text(value,
                   style: const TextStyle(

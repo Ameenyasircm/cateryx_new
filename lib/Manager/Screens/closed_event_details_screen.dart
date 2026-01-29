@@ -22,7 +22,7 @@ class ClosedEventDetailsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         backgroundColor:blue7E,
-        title:  Text('Closed Events Details',style: AppTypography.body1.copyWith(
+        title:  Text('Completed Events Details',style: AppTypography.body1.copyWith(
           color: Colors.white
         ),),
       ),

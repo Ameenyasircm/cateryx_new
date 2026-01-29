@@ -50,7 +50,7 @@ Widget mapBox(double lat, double lng,BuildContext context) {
         AppSpacing.h10,
         OutlinedButton.icon(
           onPressed: lat == 0 && lng == 0 ? null : () {
-            eventDetailsProvider.openGoogleMap(lat, lng);
+            eventDetailsProvider.openGoogleMapDirection(destLat: lat, destLng: lng);
           },
           icon: const Icon(Icons.location_on_outlined, color: Colors.blueAccent),
           label: Text(

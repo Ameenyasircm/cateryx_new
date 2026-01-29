@@ -98,7 +98,9 @@ class ManagerMenuScreen extends StatelessWidget {
                   subtitle: "View all payments",
                   onTap: () {
                     managerProvider.clearFilters();
-                    callNext(ManagerPaymentReportScreen(), context);
+                    managerProvider.fetchFirstPage();  // no boyId
+                    callNext(ManagerPaymentReportScreen(fromWhere: 'manager'), context);
+
                   },
                 ),
                 _menuTile(
@@ -116,7 +118,7 @@ class ManagerMenuScreen extends StatelessWidget {
                   subtitle: "Finished job details",
                   onTap: () {
                     context.read<EventDetailsProvider>().fetchClosedEvents();
-                    callNext(ClosedEventsScreen(), context);
+                    callNext(ClosedEventsScreen(fromWhere: 'manager', boyId: '',), context);
                   },
                 ),
                 _menuTile(

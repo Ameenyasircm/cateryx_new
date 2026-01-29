@@ -133,7 +133,10 @@ class EventService {
         'EVENT_DATE': data['EVENT_DATE'],
         'EVENT_DATE_TS': data['EVENT_DATE_TS'],
         'LOCATION_NAME': data['LOCATION_NAME'],
-        'EVENT_ID': eventId,
+        'LATITUDE': data['LATITUDE'],
+        'LONGITUDE': data['LONGITUDE'],
+        'MEAL_TYPE': data['MEAL_TYPE'],
+        'CLIENT_NAME': data['CLIENT_NAME'],
       };
 
       // EVENTS → CONFIRMED_BOYS
@@ -142,6 +145,7 @@ class EventService {
       // BOYS → CONFIRMED_WORKS
       transaction.set(boyWorkRef, minimalEventData);
     });
+    fetchUpcomingEvents(boyId);
   }
   Future<List<EventModel>> fetchConfirmedWorks(String userId) async {
     try {

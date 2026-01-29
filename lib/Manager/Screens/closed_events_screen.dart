@@ -11,7 +11,8 @@ import '../Providers/EventDetailProvider.dart';
 import 'closed_event_details_screen.dart';
 
 class ClosedEventsScreen extends StatelessWidget {
-  const ClosedEventsScreen({super.key});
+ final String fromWhere,boyId;
+  const ClosedEventsScreen({super.key,required this.fromWhere,required this.boyId});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ class ClosedEventsScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.calendar_today,color: Colors.white,),
             onPressed: (){
-              provider.pickDate(context);
+              provider.pickDate(context,fromWhere,boyId);
             },
           ),
           if (provider.selectedDate != null)
@@ -41,7 +42,12 @@ class ClosedEventsScreen extends StatelessWidget {
               icon: const Icon(Icons.clear,color: Colors.white,),
               onPressed: () {
                 provider.selectedDate = null;
-                provider.fetchClosedEvents();
+                if(fromWhere=='manager'){
+                  provider.fetchClosedEvents();
+                }else{
+                  provider.fetchClosedEventsForBoy(boyId);
+                }
+
               },
             ),
         ],
@@ -58,7 +64,7 @@ class ClosedEventsScreen extends StatelessWidget {
     if (provider.closedEventsList.isEmpty) {
       return const Center(
         child: Text(
-          'No closed events found',
+          'Completed events not found',
           style: TextStyle(fontSize: 16),
         ),
       );

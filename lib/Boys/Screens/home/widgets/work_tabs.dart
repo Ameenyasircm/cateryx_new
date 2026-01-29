@@ -142,6 +142,7 @@ class ConfirmedWorksTab extends StatelessWidget {
             final event = events[index];
             return  InkWell(
               onTap: (){
+
                 callNext(WorkDetailsScreen(work:event ,), context);
 
 

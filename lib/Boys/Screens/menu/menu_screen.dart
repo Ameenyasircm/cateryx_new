@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../Constants/my_functions.dart';
+import '../../../Manager/Providers/EventDetailProvider.dart';
+import '../../../Manager/Providers/ManagerProvider.dart';
 import '../../../Manager/Screens/LoginScreen.dart';
+import '../../../Manager/Screens/closed_events_screen.dart';
+import '../../../Manager/Screens/payment_report_screen.dart';
 import '../../../Manager/Screens/update_password_screen.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/logout_alert.dart';
@@ -14,6 +19,7 @@ class MenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ManagerProvider managerProvider = Provider.of<ManagerProvider>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -44,10 +50,25 @@ class MenuScreen extends StatelessWidget {
             },
           ),
           MenuTile(
+            icon: Icons.task_alt_rounded,
+            title: 'Completed Works',
+            onTap: () {
+              context.read<EventDetailsProvider>().fetchClosedEventsForBoy(boyID);
+              callNext(ClosedEventsScreen(fromWhere: 'boy', boyId: boyID,), context);
+
+            },
+          ),
+          MenuTile(
             icon: Icons.receipt_long_outlined,
             title: 'Payment Report',
             onTap: () {
-              // Navigator.push(...)
+              managerProvider.clearFilters();
+              managerProvider.fetchFirstPage(boyId: boyID);
+              callNext(
+                ManagerPaymentReportScreen(fromWhere: 'boy', boyId: boyID),
+                context,
+              );
+
             },
           ),
           Spacer(),
