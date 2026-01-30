@@ -9,6 +9,7 @@ import '../../../Manager/Screens/payment_report_screen.dart';
 import '../../../Manager/Screens/update_password_screen.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/logout_alert.dart';
+import 'captain_works_screen.dart';
 import 'widgets/menu_header.dart';
 import 'widgets/menu_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,17 +40,15 @@ class MenuScreen extends StatelessWidget {
           //     // Navigator.push(...)
           //   },
           // ),
+
           MenuTile(
-            icon: Icons.lock_open_rounded,
-            title: 'Change password',
+            icon: Icons.workspaces_outline,
+            title: 'Captain Works',
             onTap: () {
-              callNext(
-                ChangePasswordScreen(managerID: boyID, fromWhere: 'boy',),
-                context,
-              );
+              context.read<EventDetailsProvider>().fetchCaptainEvents(boyID);
+              callNext(CaptainEventsScreen(captainId:boyID ,captainName:boyName ,), context);
             },
-          ),
-          MenuTile(
+          ),   MenuTile(
             icon: Icons.task_alt_rounded,
             title: 'Completed Works',
             onTap: () {
@@ -69,6 +68,16 @@ class MenuScreen extends StatelessWidget {
                 context,
               );
 
+            },
+          ),
+          MenuTile(
+            icon: Icons.lock_open_rounded,
+            title: 'Change password',
+            onTap: () {
+              callNext(
+                ChangePasswordScreen(managerID: boyID, fromWhere: 'boy',),
+                context,
+              );
             },
           ),
           Spacer(),
