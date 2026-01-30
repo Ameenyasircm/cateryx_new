@@ -20,8 +20,9 @@ import 'event_payment_screen.dart';
 
 class EventDetailedScreen extends StatefulWidget {
   final String eventID;
+  final String fromWhere;
 
-  const EventDetailedScreen({super.key, required this.eventID});
+  const EventDetailedScreen({super.key, required this.eventID, required this.fromWhere});
 
   @override
   State<EventDetailedScreen> createState() => _EventDetailedScreenState();
@@ -170,6 +171,34 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                           AppSpacing.h20,
                         Row(
                           children: [
+                            if(widget.fromWhere=="upcoming")
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: _outlineButton(
+                                  text: 'Publish Now',
+                                  textColor: red22,
+                                  onTap: () async {
+                                    final isConfirmed = await showConfirmationDialog(
+                                      context: context,
+                                      title: 'Publish Event',
+                                      message: 'Are you sure you want to publish this event?',
+                                      confirmText: 'Yes',
+                                      cancelText: 'No',
+                                    );
+
+                                    if (!isConfirmed) return;
+
+                                    managerProvider.publishEvent(
+                                      provider.eventModel!.eventId,context
+                                    );
+                                    finish(context);
+
+
+                                  },
+                                ),
+                              ),
+                            ),
                             Expanded(
                               child: _outlineButton(
                                 text: 'Close Event',
@@ -427,7 +456,7 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
           text,
           style: AppTypography.body2.copyWith(
             color: textColor,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             fontSize: 13.sp,
           ),
         ),

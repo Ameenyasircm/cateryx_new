@@ -21,7 +21,9 @@ Future<bool> showConfirmationDialog({
       return AlertDialog(
         backgroundColor: Colors.white,
         title: Text(title,style: AppTypography.body1),
-        content: Text(message,style: AppTypography.caption),
+        content: Text(message,style: AppTypography.caption.copyWith(
+          fontSize: 13.sp
+        )),
         actions: [
 
           Row(

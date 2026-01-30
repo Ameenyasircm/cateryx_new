@@ -54,7 +54,7 @@ class CaptainEventsScreen extends StatelessWidget {
                   provider.setEventModelData(event);
                   provider.fetchSiteCaptain(event.eventId);
                   callNext(
-                    EventDetailedScreen(eventID: event.eventId),
+                    EventDetailedScreen(eventID: event.eventId, fromWhere: '',),
                     context,
                   );
                 },

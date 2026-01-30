@@ -117,7 +117,8 @@ class ManagerHomeScreen extends StatelessWidget {
                         eventDetailsProvider.setEventModelData(event);
                         eventDetailsProvider.fetchSiteCaptain(event.eventId);
                         callNext(
-                          EventDetailedScreen(eventID: event.eventId,),
+                          EventDetailedScreen(eventID: event.eventId,
+                            fromWhere: provider.selectedTabIndex == 0?"confirmed":"upcoming",),
                           context,
                         );
                       },

@@ -199,6 +199,27 @@ class ManagerProvider extends ChangeNotifier{
     }
   }
 
+  Future<void> publishEvent(String eventId,BuildContext context) async {
+    final prefs=await SharedPreferences.getInstance();
+    String adminId=prefs.getString('adminID')??"";
+    String adminName=prefs.getString('adminName')??"";
+    String adminPhone=prefs.getString('phone_number')??"";
+     db.collection("EVENTS").doc(eventId).set({
+       'STATUS':'PUBLISHED',
+       'EVENT_STATUS':'UPCOMING',
+       'EVENT_PUBLISHED_BY':adminName,
+       'EVENT_PUBLISHED_BY_ID':adminId,
+       'EVENT_PUBLISHED_BY_PHONE':adminPhone,
+       'PUBLISHED_TIME':FieldValue.serverTimestamp(),
+
+     },SetOptions(merge: true));
+    upcomingEventsList.removeWhere((e) => e.eventId == eventId);
+     ScaffoldMessenger.of(context).showSnackBar(
+       const SnackBar(content: Text("Event published successfully")),
+     );
+     notifyListeners();
+  }
+
   Future<void> editEventFun(
       BuildContext context,
       String eventId,

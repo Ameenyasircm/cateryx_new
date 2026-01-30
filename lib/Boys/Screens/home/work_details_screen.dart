@@ -291,6 +291,13 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
 
                     const SizedBox(height: 24),
 
+
+                    _infoRow(
+                      icon: Icons.person_2_outlined,
+                      label: 'Client Name',
+                      value: widget.work.clientName,
+                    ),
+                    const SizedBox(height: 12),
                     /// INFO ROWS
                     _infoRow(
                       icon: Icons.location_on,
@@ -318,6 +325,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                           ? 'No route available'
                           : '${routeDistance!.toStringAsFixed(2)} km (${(routeDistance! * 0.621371).toStringAsFixed(2)} mi)',
                     ),
+
                     const SizedBox(height: 12),
 
                     // _infoRow(
