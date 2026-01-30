@@ -58,43 +58,17 @@ class AvailableWorksTab extends StatelessWidget {
           if (events.isEmpty) {
             return  Center(child: Text('No events found',style: AppTypography.body2,));
           }
+
         return ListView.builder(
           itemCount: events.length,
           padding: const EdgeInsets.all(16),
           shrinkWrap: true,
           itemBuilder: (context7,index){
-
             final event = events[index];
             return  InkWell(
               onTap: () async {
+                callNext(WorkDetailsScreen(work:event, fromWhere: 'available' ,), context);
 
-                final confirmed = await showConfirmDialog(
-                  context: context,
-                  title: 'Take this work?',
-                  message: 'Do you want to take ${event.eventName}?',
-                  confirmText: 'Confirm',
-                );
-
-                if (!confirmed) return;
-
-                showLoader(context);
-
-                try {
-                  await _service.takeWork(event.eventId, userId);
-
-                  hideLoader(context);
-
-                  await showSuccessAlert(
-                    context: context,
-                    title: 'Success',
-                    message: 'Work confirmed successfully',
-                  );
-
-                } catch (e) {
-                  hideLoader(context);
-                  NotificationSnack.showError(e.toString());
-
-                }
               },
 
               child: WorkCard(
@@ -138,13 +112,10 @@ class ConfirmedWorksTab extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           shrinkWrap: true,
           itemBuilder: (context7,index){
-
             final event = events[index];
             return  InkWell(
               onTap: (){
-
-                callNext(WorkDetailsScreen(work:event ,), context);
-
+                callNext(WorkDetailsScreen(work:event, fromWhere: 'confirmed',userId: userId ,), context);
 
               },
               child: WorkCard(

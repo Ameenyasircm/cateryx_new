@@ -1,27 +1,38 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import '../../../Constants/colors.dart';
 import '../../../Manager/Models/event_model.dart';
+import '../../../core/utils/alert_utils.dart';
+import '../../../core/utils/dialog_utils.dart';
+import '../../../core/utils/extensions/context_extensions.dart';
+import '../../../core/utils/loader/loader.dart';
+import '../../../core/utils/snackBarNotifications/snackBar_notifications.dart';
+import '../../../services/event_service.dart';
 import '../../../services/location_service.dart';
 
 class WorkDetailsScreen extends StatefulWidget {
   final EventModel work;
-
-  const WorkDetailsScreen({super.key, required this.work});
+  final String? userId;
+  final String fromWhere;
+  const WorkDetailsScreen({super.key, required this.work,required this.fromWhere,this.userId});
 
   @override
   State<WorkDetailsScreen> createState() => _WorkDetailsScreenState();
 }
 
 class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
+  final EventService _service = EventService();
   Position? currentPosition;
   List<LatLng> polylineCoordinates = [];
   String currentLocationAddress = "Loading...";
+  double? routeDistance;
   // ✅ FREE OpenRouteService API Key (get yours at openrouteservice.org)
   final String openRouteServiceApiKey = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjFlYzMwZTQ1MjEyZTQyZmZhYTlkYzYzMzhlZjEzZDRmIiwiaCI6Im11cm11cjY0In0=";
 
@@ -41,6 +52,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
     setState(() {
       isPolylineLoading = true;
       polylineCoordinates.clear();
+      routeDistance = null; // ✅ RESET distance
     });
 
     try {
@@ -64,15 +76,20 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List<dynamic> coordinates = data['features'][0]['geometry']['coordinates'];
+        final List coordinates = data['features'][0]['geometry']['coordinates'];
+
+        // ✅ EXTRACT DISTANCE (in meters, convert to km)
+        final distanceInMeters = data['features'][0]['properties']['segments'][0]['distance'];
 
         setState(() {
           polylineCoordinates = coordinates
-              .map((coord) => LatLng(coord[1], coord[0])) // Note: reversed [lng, lat] to [lat, lng]
+              .map((coord) => LatLng(coord[1], coord[0]))
               .toList();
+          routeDistance = distanceInMeters / 1000; // ✅ Convert to kilometers
         });
 
         debugPrint("✅ SUCCESS: ${polylineCoordinates.length} points loaded");
+        debugPrint("✅ DISTANCE: ${routeDistance!.toStringAsFixed(2)} km");
       } else {
         debugPrint("❌ FAILED: ${response.body}");
         if (mounted) {
@@ -100,6 +117,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
       isPolylineLoading = false;
     });
   }
+
 
   Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
     try {
@@ -291,22 +309,88 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                     ),
 
                     const SizedBox(height: 12),
-
                     _infoRow(
                       icon: Icons.route,
-                      label: 'Route Status',
+                      label: 'Distance',
                       value: isPolylineLoading
-                          ? 'Loading...'
-                          : polylineCoordinates.isEmpty
+                          ? 'Calculating...'
+                          : routeDistance == null
                           ? 'No route available'
-                          : '✓ Route loaded (${polylineCoordinates.length} points)',
+                          : '${routeDistance!.toStringAsFixed(2)} km (${(routeDistance! * 0.621371).toStringAsFixed(2)} mi)',
                     ),
+                    const SizedBox(height: 12),
+
+                    // _infoRow(
+                    //   icon: Icons.route,
+                    //   label: 'Route Status',
+                    //   value: isPolylineLoading
+                    //       ? 'Loading...'
+                    //       : polylineCoordinates.isEmpty
+                    //       ? 'No route available'
+                    //       : '✓ Route loaded (${polylineCoordinates.length} points)',
+                    // ),
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Visibility(
+        visible: widget.fromWhere=="available"?true:false,
+        child: Padding(
+          padding:EdgeInsets.symmetric(horizontal: 20.w,vertical: 25.h),
+          child: SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () async {
+                final confirmed = await showConfirmDialog(
+                  context: context,
+                  title: 'Take this work?',
+                  message: 'Do you want to take ${widget.work.eventName}?',
+                  confirmText: 'Confirm',
+                );
+
+                if (!confirmed) return;
+
+                showLoader(context);
+
+                try {
+                  await _service.takeWork(widget.work.eventId, widget.userId??"");
+
+                  hideLoader(context);
+
+                  await showSuccessAlert(
+                  context: context,
+                  title: 'Success',
+                  message: 'Work confirmed successfully',
+                  );
+
+                } catch (e) {
+                  hideLoader(context);
+                  NotificationSnack.showError(e.toString());
+
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: red22,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                "Take Work",
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
