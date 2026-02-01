@@ -724,45 +724,94 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchClosedEventsForBoy(String boyId,{DateTime? date}) async {
+  Future<void> fetchClosedEventsForBoy(
+      String boyId, {
+        DateTime? date,
+        int maxParallel = 5,
+      }) async {
     isLoadingClosedEvents = true;
     notifyListeners();
 
-    Query query = db
-        .collection('BOYS').doc(boyId).collection('CONFIRMED_WORKS')
-        .where('WORK_ACTIVE_STATUS', isEqualTo: 'CLOSED');
+    try {
+      final worksSnap = await db
+          .collection('BOYS')
+          .doc(boyId)
+          .collection('CONFIRMED_WORKS')
+          .get();
 
-    if (date != null) {
-      final start = DateTime(date.year, date.month, date.day);
-      final end = start.add(const Duration(days: 1));
+      final eventIds = worksSnap.docs
+          .map((e) => e.data()['EVENT_ID'] as String?)
+          .where((id) => id != null && id.trim().isNotEmpty)
+          .cast<String>()
+          .toSet()
+          .toList();
 
-      query = query
-          .where(
-        'CLOSED_TIME',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(start),
-      )
-          .where(
-        'CLOSED_TIME',
-        isLessThan: Timestamp.fromDate(end),
-      );
+      if (eventIds.isEmpty) {
+        closedEventsList = [];
+        return;
+      }
+
+      Timestamp? startTs;
+      Timestamp? endTs;
+
+      if (date != null) {
+        final start = DateTime(date.year, date.month, date.day);
+        final end = start.add(const Duration(days: 1));
+        startTs = Timestamp.fromDate(start);
+        endTs = Timestamp.fromDate(end);
+      }
+
+      List<List<String>> chunk(List<String> ids, int size) {
+        final chunks = <List<String>>[];
+        for (int i = 0; i < ids.length; i += size) {
+          chunks.add(ids.sublist(i, (i + size > ids.length) ? ids.length : i + size));
+        }
+        return chunks;
+      }
+
+      final chunks = chunk(eventIds, 10);
+      List<ClosedEventModel> allEvents = [];
+
+      /// Throttled parallel execution
+      for (int i = 0; i < chunks.length; i += maxParallel) {
+        final currentBatch = chunks.skip(i).take(maxParallel).toList();
+
+        final futures = currentBatch.map((chunkIds) async {
+          Query query = db
+              .collection('EVENTS')
+              .where(FieldPath.documentId, whereIn: chunkIds)
+              .where('STATUS', isEqualTo: 'CLOSED');
+
+          if (date != null) {
+            query = query
+                .where('CLOSED_TIME', isGreaterThanOrEqualTo: startTs)
+                .where('CLOSED_TIME', isLessThan: endTs);
+          }
+
+          final snap = await query.orderBy('CLOSED_TIME', descending: true).get();
+
+          return snap.docs.map((doc) {
+            return ClosedEventModel.fromMap(
+              Map<String, dynamic>.from(doc.data() as Map),
+            );
+          }).toList();
+        }).toList();
+
+        final results = await Future.wait(futures);
+        allEvents.addAll(results.expand((e) => e));
+      }
+
+      allEvents.sort((a, b) => b.closedTime.compareTo(a.closedTime));
+      closedEventsList = allEvents;
+    } catch (e) {
+      debugPrint("fetchClosedEventsForBoyParallelThrottled error: $e");
+      closedEventsList = [];
     }
-
-    final result = await query
-        .orderBy('CLOSED_TIME', descending: true)
-        .get();
-    closedEventsList = result.docs
-        .where((e) => e.data() != null)
-        .map(
-          (e) => ClosedEventModel.fromMap(
-        Map<String, dynamic>.from(e.data() as Map),
-      ),
-    )
-        .toList();
-
 
     isLoadingClosedEvents = false;
     notifyListeners();
   }
+
 
   DateTime? selectedDate;
   Future<void> pickDate(BuildContext context,String fromWhere,String boyId) async {

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ClosedEventModel {
   final String eventId;
   final String eventName;
@@ -12,6 +14,10 @@ class ClosedEventModel {
   final int boysTaken;
   final String description;
   final String eventStatus;
+
+  /// ✅ new
+  final DateTime closedTime;
+
   ClosedEventModel({
     required this.eventId,
     required this.eventName,
@@ -26,9 +32,26 @@ class ClosedEventModel {
     required this.boysTaken,
     required this.description,
     required this.eventStatus,
+
+    /// ✅ new
+    required this.closedTime,
   });
 
   factory ClosedEventModel.fromMap(Map<String, dynamic> map) {
+    final dynamic closedTimeRaw = map['CLOSED_TIME'];
+
+    DateTime parsedClosedTime = DateTime.fromMillisecondsSinceEpoch(0);
+
+    if (closedTimeRaw is Timestamp) {
+      parsedClosedTime = closedTimeRaw.toDate();
+    } else if (closedTimeRaw is DateTime) {
+      parsedClosedTime = closedTimeRaw;
+    } else if (closedTimeRaw != null) {
+      // fallback if stored as string/number
+      parsedClosedTime = DateTime.tryParse(closedTimeRaw.toString()) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
     return ClosedEventModel(
       eventId: map['EVENT_ID'] ?? '',
       eventName: map['EVENT_NAME'] ?? '',
@@ -45,6 +68,10 @@ class ClosedEventModel {
       boysTaken: (map['BOYS_TAKEN'] as num?)?.toInt() ?? 0,
       description: map['DESCRIPTION'] as String? ?? '',
       eventStatus: map['EVENT_STATUS'] as String? ?? '',
+
+      /// ✅ new
+      closedTime: parsedClosedTime,
     );
   }
 }
+
