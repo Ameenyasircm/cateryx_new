@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:cateryyx/Boys/Providers/boys_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart'; // ✅ ADD THIS
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Constants/colors.dart';
 import '../../Constants/my_functions.dart';
@@ -31,13 +33,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
-    getPackageName();
-    initialize();
+
+    // ✅ Call initialize after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initialize();
+    });
   }
 
   Future<void> initialize() async {
     await Future.wait([getPackageName(), localDB()]);
-    LoginProvider loginProvider = LoginProvider();
+
+    // ✅ Use Provider.of to get the SAME instance from the widget tree
+    if (!mounted) return;
+
+    LoginProvider loginProvider = Provider.of<LoginProvider>(context, listen: false);
+    BoysProvider boysProvider = Provider.of<BoysProvider>(context, listen: false);
+
+    await boysProvider.getAppVersion();
+    await boysProvider.LockAppCheckFisrt();
 
     // Small delay to ensure the splash is visible before navigating
     Timer(const Duration(seconds: 3), () {
@@ -48,36 +61,36 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
       // Navigation logic based on Package Name
       if (packageName == "com.evento.boys" || packageName == "com.evento.manager") {
-        navigateUser(user, loginProvider, const Loginscreen(),userPassword);
+        navigateUser(user, loginProvider, const Loginscreen(), userPassword);
       }
     });
   }
 
   Future<void> localDB() async {
     prefs = await SharedPreferences.getInstance();
-
   }
 
   Future<void> getPackageName() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    if (!mounted) return;
     setState(() {
       packageName = packageInfo.packageName;
-      print(packageName.toString()+' FRJ FNRJF ');
+      print(packageName.toString() + ' FRJ FNRJF ');
     });
   }
 
-  void navigateUser(String? phoneNumber, LoginProvider loginProvider, Widget screen,String? userPassword) {
+  void navigateUser(String? phoneNumber, LoginProvider loginProvider, Widget screen, String? userPassword) {
     if (phoneNumber == null) {
       loginProvider.loginphoneController.clear();
       callNextReplacement(screen, context);
     } else {
-      loginProvider.userAuthorized(context: context,phone:phoneNumber,password: userPassword!);
+      loginProvider.userAuthorized(context: context, phone: phoneNumber, password: userPassword!);
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Important: Dispose controller to prevent memory leaks
+    _controller.dispose();
     super.dispose();
   }
 
@@ -93,21 +106,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Make sure your logo filename matches exactly
                   Image.asset(
                     'assets/Logo.png',
                     width: MediaQuery.of(context).size.width * 0.8,
                   ),
                   const SizedBox(height: 24),
-                  // const Text(
-                  //   "CATERING CREW MANAGEMENT",
-                  //   style: TextStyle(
-                  //     fontSize: 10,
-                  //     letterSpacing: 1.5,
-                  //     fontWeight: FontWeight.bold,
-                  //     color: Color(0xFF1A237E), // Navy Blue
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -118,7 +121,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             right: 0,
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE64A19)), // Orange
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE64A19)),
                 strokeWidth: 2,
               ),
             ),

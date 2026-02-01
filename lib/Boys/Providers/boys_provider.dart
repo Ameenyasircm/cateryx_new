@@ -1,17 +1,29 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:cateryyx/Boys/Screens/home/boy_home.dart';
+import 'package:cateryyx/Manager/Screens/splashScreen.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../Constants/my_functions.dart';
+import '../../Manager/Providers/EventDetailProvider.dart';
+import '../../Manager/Providers/LoginProvider.dart';
+import '../../Manager/Providers/ManagerProvider.dart';
+import '../../Manager/Screens/manager_bottom.dart';
+import '../../core/utils/alert_utils.dart';
+import '../Screens/navbar/boy_bottomNav.dart';
 import '../Screens/pending_admin_approval.dart';
 
 class BoysProvider extends ChangeNotifier{
 
   final FirebaseFirestore db = FirebaseFirestore.instance;
-
+  final DatabaseReference mRoot = FirebaseDatabase.instance.ref();
 
   TextEditingController boyNameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
@@ -26,6 +38,11 @@ class BoysProvider extends ChangeNotifier{
   TextEditingController wageController = TextEditingController();
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+
+  BoysProvider(){
+    getAppVersion();
+    LockAppCheckFisrt();
+  }
 
   void togglePasswordVisibility() {
     obscurePassword = !obscurePassword;
@@ -328,6 +345,265 @@ class BoysProvider extends ChangeNotifier{
     dobDateTime = null;
 
     notifyListeners();
+  }
+
+
+  /// App Lock Code
+
+  String? appVersion;
+  String currentVersion='';
+  String buildNumber="";
+
+  Future<void> getAppVersion() async {
+    PackageInfo.fromPlatform().then((value) {
+      currentVersion=value.version;
+      buildNumber = value.buildNumber;
+      appVersion=buildNumber;
+      notifyListeners();
+    });
+
+  }
+
+  String? packageName;
+  Future<void> LockAppCheckFisrt() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    packageName = packageInfo.packageName;
+    if(packageName=='com.evento.boys'){
+      lockAppBoys();
+    }else {
+      lockAppGM();
+    }
+    notifyListeners();
+  }
+
+  void lockAppBoys() {
+    print("boyysssss login  here");
+    mRoot.child("0").onValue.listen((event) async {
+      if (event.snapshot.value != null) {
+        Map<dynamic, dynamic> map = event.snapshot.value as Map;
+        List<String> versions = Platform.isIOS
+            ? map['iOSVersion'].toString().split(',')
+            : map['BoysAppVersion'].toString().split(',');
+
+        print("Boys App Lock "+versions.toString() + ' ' + appVersion.toString());
+
+        if (!versions.contains(appVersion)) {
+          // bool versionStatus = await checkVersionExist();
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          String? name = prefs.getString('adminName');
+          String? id = prefs.getString('adminName');
+          String? phone = prefs.getString('adminName');
+
+            String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
+            String button = map['BUTTON'].toString();
+            String text = map['TEXT'].toString();
+            // showGlobalUpdateAlert(text);
+
+          print(' need to lock boy appp ');
+            runApp(
+              MultiProvider(
+                providers: [
+                  ChangeNotifierProvider(create: (_) => LoginProvider()),
+                  ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                  ChangeNotifierProvider(create: (_) => BoysProvider()),
+                  ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+                ],
+                child: MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  theme: ThemeData(
+                    useMaterial3: true,
+                    primarySwatch: Colors.blue,
+                  ),
+                  home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,isLockBool: true,),
+                ),
+              ),
+            );
+        }
+      }
+    });
+  }
+
+  void ReOpen(BuildContext context) {
+    print("boyysssss login  here");
+    mRoot.child("0").onValue.listen((event) async {
+      if (event.snapshot.value != null) {
+        Map<dynamic, dynamic> map = event.snapshot.value as Map;
+        List<String> versions = Platform.isIOS
+            ? map['iOSVersion'].toString().split(',')
+            : map['BoysAppVersion'].toString().split(',');
+
+        print("Boys App Lock "+versions.toString() + ' ' + appVersion.toString());
+
+        if (!versions.contains(appVersion)) {
+          // bool versionStatus = await checkVersionExist();
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          String? name = prefs.getString('adminName');
+          String? id = prefs.getString('adminName');
+          String? phone = prefs.getString('adminName');
+
+          String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
+          String button = map['BUTTON'].toString();
+          String text = map['TEXT'].toString();
+          // showGlobalUpdateAlert(text);
+          runApp(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => LoginProvider()),
+                ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                ChangeNotifierProvider(create: (_) => BoysProvider()),
+                ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  primarySwatch: Colors.blue,
+                ),
+                home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,isLockBool: true,),
+              ),
+            ),
+          );
+        }else{
+          String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
+          String button = map['BUTTON'].toString();
+          String text = map['TEXT'].toString();
+          // showGlobalUpdateAlert(text);
+          runApp(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => LoginProvider()),
+                ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                ChangeNotifierProvider(create: (_) => BoysProvider()),
+                ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  primarySwatch: Colors.blue,
+                ),
+                home: SplashScreen(),
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+
+
+
+  void lockAppGM() {
+    mRoot.child("0").onValue.listen((event) async {
+      if (event.snapshot.value != null) {
+        Map<dynamic, dynamic> map = event.snapshot.value as Map;
+        List<String> versions = Platform.isIOS
+            ? map['iOSVersion'].toString().split(',')
+            : map['GMAppVersions'].toString().split(',');
+
+        print("Boys App Lock "+versions.toString() + ' ' + appVersion.toString());
+
+        if (!versions.contains(appVersion)) {
+          // bool versionStatus = await checkVersionExist();
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          String? id = prefs.getString('adminID');
+          String? name = prefs.getString('adminName');
+          String? phone = prefs.getString('phone_number');
+
+          String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
+          String button = map['BUTTON'].toString();
+          String text = map['TEXT'].toString();
+          // showGlobalUpdateAlert(text);
+
+          print(' need to lock boy appp ');
+          runApp(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => LoginProvider()),
+                ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                ChangeNotifierProvider(create: (_) => BoysProvider()),
+                ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  primarySwatch: Colors.blue,
+                ),
+                home: ManagerBottom(adminPhone: phone!,adminName:name! ,adminID: id!,isLockBool: true,),
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+
+  void reOpenGM() {
+    mRoot.child("0").onValue.listen((event) async {
+      if (event.snapshot.value != null) {
+        Map<dynamic, dynamic> map = event.snapshot.value as Map;
+        List<String> versions = Platform.isIOS
+            ? map['iOSVersion'].toString().split(',')
+            : map['GMAppVersions'].toString().split(',');
+
+        print("Boys App Lock "+versions.toString() + ' ' + appVersion.toString());
+
+        if (!versions.contains(appVersion)) {
+          // bool versionStatus = await checkVersionExist();
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          String? id = prefs.getString('adminID');
+          String? name = prefs.getString('adminName');
+          String? phone = prefs.getString('phone_number');
+
+          String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
+          String button = map['BUTTON'].toString();
+          String text = map['TEXT'].toString();
+          // showGlobalUpdateAlert(text);
+
+          print(' need to lock boy appp ');
+          runApp(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => LoginProvider()),
+                ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                ChangeNotifierProvider(create: (_) => BoysProvider()),
+                ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  primarySwatch: Colors.blue,
+                ),
+                home: ManagerBottom(adminPhone: phone!,adminName:name! ,adminID: id!,isLockBool: true,),
+              ),
+            ),
+          );
+        }else{
+          runApp(
+            MultiProvider(
+              providers: [
+                ChangeNotifierProvider(create: (_) => LoginProvider()),
+                ChangeNotifierProvider(create: (_) => ManagerProvider()),
+                ChangeNotifierProvider(create: (_) => BoysProvider()),
+                ChangeNotifierProvider(create: (_) => EventDetailsProvider()),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  primarySwatch: Colors.blue,
+                ),
+                home: SplashScreen(),
+              ),
+            ),
+          );
+        }
+      }
+    });
   }
 
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../Boys/Providers/boys_provider.dart';
 import 'all_boys_screen.dart';
 import 'manager_home_screen.dart';
@@ -8,7 +9,9 @@ import 'package:provider/provider.dart';
 class ManagerBottom extends StatefulWidget {
   String adminID,adminName,adminPhone;
   int initialIndex=0;
-  ManagerBottom({Key? key,required this.adminID,required this.adminName,required this.adminPhone}) : super(key: key);
+  bool isLockBool;
+  ManagerBottom({Key? key,required this.adminID,required this.adminName
+    ,required this.adminPhone,required this.isLockBool}) : super(key: key);
 
   @override
   State<ManagerBottom> createState() => _ManagerBottomState();
@@ -24,7 +27,13 @@ class _ManagerBottomState extends State<ManagerBottom> {
   @override
   void initState() {
     super.initState();
-
+    if (widget.isLockBool == true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showForceUpdatePopup();
+      });
+    }else{
+      print('${widget.isLockBool} FJRKJRF ');
+    }
     _currentPage = 0;
 
     _screens = [
@@ -38,6 +47,52 @@ class _ManagerBottomState extends State<ManagerBottom> {
     ];
   }
 
+  void _showForceUpdatePopup() {
+
+    BoysProvider boysProvider = Provider.of<BoysProvider>(context, listen: false);
+    boysProvider.getAppVersion();
+    boysProvider.reOpenGM();
+    showDialog(
+      context: context,
+      barrierDismissible: false, // ❌ Not closable
+      builder: (context) {
+        return WillPopScope( // ❌ Back button disabled
+          onWillPop: () async => false,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              "Update Required",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "A new version of the app is available.\n\nPlease update to continue.",
+              style: TextStyle(fontSize: 15),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  minimumSize: const Size(double.infinity, 45),
+                ),
+                onPressed: () async {
+                  const playStoreUrl =
+                      "https://play.google.com/store/apps/details?id=com.yourapp.package";
+
+                  if (await canLaunchUrl(Uri.parse(playStoreUrl))) {
+                    await launchUrl(Uri.parse(playStoreUrl),
+                        mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: const Text("UPDATE"),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   void _onTabSelected(int index) {
     setState(() {

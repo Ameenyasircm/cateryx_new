@@ -69,7 +69,7 @@ class LoginProvider extends ChangeNotifier{
           managerProvider.fetchRunningEvents();
 
           callNextReplacement(ManagerBottom(
-            adminID: adminID, adminName: adminName, adminPhone: phone,),
+            adminID: adminID, adminName: adminName, adminPhone: phone,isLockBool: false,),
               context);
         } else {
           // 4. Failure: No match found
@@ -111,7 +111,7 @@ class LoginProvider extends ChangeNotifier{
           Provider.of<BoysProvider>(context, listen: false);
 
           if(dataMap['STATUS']=='APPROVED'){
-            callNextReplacement(BoyBottomNavBar(boyID: adminID, boyName: adminName, boyPhone: phone,), context);
+            callNextReplacement(BoyBottomNavBar(boyID: adminID, boyName: adminName, boyPhone: phone,isLockBool: false,), context);
 
           }else{
             callNextReplacement(PendingAdminApproval(), context);
