@@ -416,7 +416,9 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                   title: 'Success',
                   message: 'Work confirmed successfully',
                   );
-                  finish(context);
+                  
+                  // Return true to indicate work was taken, so parent can refresh list
+                  Navigator.pop(context, true);
 
                 } catch (e) {
                   hideLoader(context);

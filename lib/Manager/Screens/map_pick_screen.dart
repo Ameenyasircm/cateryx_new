@@ -141,7 +141,28 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    // Show map immediately, load location in background
+    _initializeMap();
+    _getCurrentLocation(); // Non-blocking
+  }
+
+  void _initializeMap() {
+    // Set initial marker immediately so map shows right away
+    if (mounted) {
+      try {
+        setState(() {
+          marker = Marker(
+            markerId: const MarkerId("selected"),
+            position: selectedLatLng,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          );
+          selectedAddress = "Tap on map to pick location";
+          isLoading = false; // Don't block UI
+        });
+      } catch (e) {
+        print("setState error in _initializeMap: $e");
+      }
+    }
   }
 
   @override
@@ -162,31 +183,34 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     _lastRequestTime = DateTime.now();
   }
 
-  /// 🔥 Get current location FIRST
+  /// 🔥 Get current location (non-blocking)
   Future<void> _getCurrentLocation() async {
     try {
-      setState(() {
-        isLoading = true;
-        selectedAddress = "Fetching your location...";
-      });
+      if (!mounted) return;
+      
+      // Update UI to show we're fetching (non-blocking)
+      if (mounted) {
+        try {
+          setState(() {
+            selectedAddress = "Fetching your location...";
+          });
+        } catch (e) {
+          print("setState error: $e");
+        }
+      }
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          selectedAddress = "Tap on map to pick location";
-          isLoading = false;
-        });
+        if (mounted) {
+          try {
+            setState(() {
+              selectedAddress = "Tap on map to pick location";
+            });
+          } catch (e) {
+            print("setState error: $e");
+          }
+        }
         _showSnackBar("Location services disabled");
-
-        // Set marker at default location
-        setState(() {
-          marker = Marker(
-            markerId: const MarkerId("selected"),
-            position: selectedLatLng,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          );
-        });
-
         await _updateAddressFromLatLng(selectedLatLng);
         return;
       }
@@ -195,86 +219,82 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          setState(() {
-            selectedAddress = "Tap on map to pick location";
-            isLoading = false;
-          });
+          if (mounted) {
+            try {
+              setState(() {
+                selectedAddress = "Tap on map to pick location";
+              });
+            } catch (e) {
+              print("setState error: $e");
+            }
+          }
           _showSnackBar("Location permission denied");
-
-          // Set marker at default location
-          setState(() {
-            marker = Marker(
-              markerId: const MarkerId("selected"),
-              position: selectedLatLng,
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            );
-          });
-
           await _updateAddressFromLatLng(selectedLatLng);
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          selectedAddress = "Tap on map to pick location";
-          isLoading = false;
-        });
+        if (mounted) {
+          try {
+            setState(() {
+              selectedAddress = "Tap on map to pick location";
+            });
+          } catch (e) {
+            print("setState error: $e");
+          }
+        }
         _showSnackBar("Enable location in settings");
-
-        // Set marker at default location
-        setState(() {
-          marker = Marker(
-            markerId: const MarkerId("selected"),
-            position: selectedLatLng,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          );
-        });
-
         await _updateAddressFromLatLng(selectedLatLng);
         return;
       }
 
+      // Use medium accuracy for faster response
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(Duration(seconds: 10));
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 5),
+      );
+
+      if (!mounted) return;
 
       final currentLatLng = LatLng(position.latitude, position.longitude);
 
-      setState(() {
-        selectedLatLng = currentLatLng;
-        marker = Marker(
-          markerId: const MarkerId("selected"),
-          position: currentLatLng,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        );
-      });
+      if (mounted) {
+        try {
+          setState(() {
+            selectedLatLng = currentLatLng;
+            marker = Marker(
+              markerId: const MarkerId("selected"),
+              position: currentLatLng,
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            );
+          });
+        } catch (e) {
+          print("setState error: $e");
+        }
+      }
 
-      // Move camera to current location with animation
+      // Move camera to current location (non-blocking)
       _mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(currentLatLng, 15),
       );
 
-      await _updateAddressFromLatLng(currentLatLng);
-
-      setState(() {
-        isLoading = false;
-      });
-
+      // Update address in background (non-blocking)
+      _updateAddressFromLatLng(currentLatLng);
       _showSnackBar("Current location found!");
 
     } catch (e) {
       print("Location error: $e");
-      setState(() {
-        selectedAddress = "Tap on map to pick location";
-        isLoading = false;
-        marker = Marker(
-          markerId: const MarkerId("selected"),
-          position: selectedLatLng,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        );
-      });
-      await _updateAddressFromLatLng(selectedLatLng);
+      if (mounted) {
+        try {
+          setState(() {
+            selectedAddress = "Tap on map to pick location";
+          });
+        } catch (setStateError) {
+          print("setState error (widget disposed): $setStateError");
+        }
+      }
+      _updateAddressFromLatLng(selectedLatLng);
       _showSnackBar("Using default location");
     }
   }
@@ -282,14 +302,23 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   /// 🔥 Search location using Nominatim (FREE)
   Future<void> _searchLocation(String query) async {
     if (query.trim().isEmpty) return;
+    if (!mounted) return;
 
     try {
-      setState(() {
-        isSearching = true;
-        showSearchResults = true;
-      });
+      if (mounted) {
+        try {
+          setState(() {
+            isSearching = true;
+            showSearchResults = true;
+          });
+        } catch (e) {
+          print("setState error: $e");
+          return;
+        }
+      }
 
       await _respectRateLimit();
+      if (!mounted) return;
 
       final url = Uri.parse(
         'https://nominatim.openstreetmap.org/search?'
@@ -305,48 +334,72 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           'User-Agent': 'FlutterMapApp/1.0 (contact@yourapp.com)',
           'Accept': 'application/json',
         },
-      ).timeout(Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
 
         if (data.isEmpty) {
           _showSnackBar("No results found");
-          setState(() {
-            searchResults = [];
-            showSearchResults = false;
-            isSearching = false;
-          });
+          if (mounted) {
+            try {
+              setState(() {
+                searchResults = [];
+                showSearchResults = false;
+                isSearching = false;
+              });
+            } catch (e) {
+              print("setState error: $e");
+            }
+          }
           return;
         }
 
-        setState(() {
-          searchResults = data.map((item) {
-            return {
-              'display_name': item['display_name'] ?? 'Unknown',
-              'lat': double.tryParse(item['lat'].toString()) ?? 0.0,
-              'lon': double.tryParse(item['lon'].toString()) ?? 0.0,
-            };
-          }).toList();
-          isSearching = false;
-        });
+        if (mounted) {
+          try {
+            setState(() {
+              searchResults = data.map((item) {
+                return {
+                  'display_name': item['display_name'] ?? 'Unknown',
+                  'lat': double.tryParse(item['lat'].toString()) ?? 0.0,
+                  'lon': double.tryParse(item['lon'].toString()) ?? 0.0,
+                };
+              }).toList();
+              isSearching = false;
+            });
+          } catch (e) {
+            print("setState error: $e");
+          }
+        }
       } else {
         throw Exception('Search failed');
       }
     } catch (e) {
       print("Search error: $e");
-      setState(() {
-        isSearching = false;
-        showSearchResults = false;
-      });
+      if (mounted) {
+        try {
+          setState(() {
+            isSearching = false;
+            showSearchResults = false;
+          });
+        } catch (setStateError) {
+          print("setState error (widget disposed): $setStateError");
+        }
+      }
       _showSnackBar("Search failed. Try again.");
     }
   }
 
-  /// 🔥 Reverse geocoding using Nominatim (FREE)
+  /// 🔥 Reverse geocoding using Nominatim (FREE) - Non-blocking
   Future<void> _updateAddressFromLatLng(LatLng latLng) async {
+    if (!mounted) return;
+    
     try {
       await _respectRateLimit();
+      
+      if (!mounted) return;
 
       final url = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?'
@@ -362,43 +415,62 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
           'User-Agent': 'FlutterMapApp/1.0 (contact@yourapp.com)',
           'Accept': 'application/json',
         },
-      ).timeout(Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() {
-          selectedAddress = data['display_name'] ?? "Selected Location";
-        });
+        if (mounted) {
+          setState(() {
+            selectedAddress = data['display_name'] ?? "Selected Location";
+          });
+        }
       } else {
-        setState(() {
-          selectedAddress = "Lat: ${latLng.latitude.toStringAsFixed(6)}, "
-              "Lng: ${latLng.longitude.toStringAsFixed(6)}";
-        });
+        if (mounted) {
+          setState(() {
+            selectedAddress = "Lat: ${latLng.latitude.toStringAsFixed(6)}, "
+                "Lng: ${latLng.longitude.toStringAsFixed(6)}";
+          });
+        }
       }
     } catch (e) {
       print("Reverse geocoding error: $e");
-      setState(() {
-        selectedAddress = "Lat: ${latLng.latitude.toStringAsFixed(6)}, "
-            "Lng: ${latLng.longitude.toStringAsFixed(6)}";
-      });
+      if (mounted) {
+        try {
+          setState(() {
+            selectedAddress = "Lat: ${latLng.latitude.toStringAsFixed(6)}, "
+                "Lng: ${latLng.longitude.toStringAsFixed(6)}";
+          });
+        } catch (setStateError) {
+          // Widget was disposed during setState, ignore
+          print("setState error (widget disposed): $setStateError");
+        }
+      }
     }
   }
 
   /// 🔥 Select search result and GOTO red marker
   void _selectSearchResult(Map<String, dynamic> result) {
+    if (!mounted) return;
+    
     final searchedLatLng = LatLng(result['lat'], result['lon']);
 
-    setState(() {
-      selectedLatLng = searchedLatLng;
-      marker = Marker(
-        markerId: const MarkerId("selected"),
-        position: searchedLatLng,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      );
-      selectedAddress = result['display_name'];
-      showSearchResults = false;
-      searchResults = [];
-    });
+    try {
+      setState(() {
+        selectedLatLng = searchedLatLng;
+        marker = Marker(
+          markerId: const MarkerId("selected"),
+          position: searchedLatLng,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        );
+        selectedAddress = result['display_name'];
+        showSearchResults = false;
+        searchResults = [];
+      });
+    } catch (e) {
+      print("setState error in _selectSearchResult: $e");
+    }
 
     // 🔥 GOTO red marker with smooth animation
     _mapController?.animateCamera(
@@ -449,18 +521,25 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             onMapCreated: (controller) {
               _mapController = controller;
             },
-            onTap: (latLng) async {
-              setState(() {
-                selectedLatLng = latLng;
-                marker = Marker(
-                  markerId: const MarkerId("selected"),
-                  position: latLng,
-                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueRed),
-                );
-                showSearchResults = false;
-              });
-              await _updateAddressFromLatLng(latLng);
+            onTap: (latLng) {
+              if (!mounted) return;
+              try {
+                setState(() {
+                  selectedLatLng = latLng;
+                  marker = Marker(
+                    markerId: const MarkerId("selected"),
+                    position: latLng,
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueRed),
+                  );
+                  showSearchResults = false;
+                  selectedAddress = "Loading address...";
+                });
+              } catch (e) {
+                print("setState error in onTap: $e");
+              }
+              // Update address in background (non-blocking)
+              _updateAddressFromLatLng(latLng);
             },
             markers: marker != null ? {marker!} : {},
             myLocationEnabled: true,
@@ -510,17 +589,31 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                         icon: Icon(Icons.clear),
                         onPressed: () {
                           searchController.clear();
-                          setState(() {
-                            showSearchResults = false;
-                            searchResults = [];
-                          });
+                          if (mounted) {
+                            try {
+                              setState(() {
+                                showSearchResults = false;
+                                searchResults = [];
+                              });
+                            } catch (e) {
+                              print("setState error: $e");
+                            }
+                          }
                         },
                       )
                           : null,
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.all(16),
                     ),
-                    onChanged: (value) => setState(() {}),
+                    onChanged: (value) {
+                      if (mounted) {
+                        try {
+                          setState(() {});
+                        } catch (e) {
+                          // Ignore setState errors in onChanged
+                        }
+                      }
+                    },
                     onSubmitted: _searchLocation,
                     textInputAction: TextInputAction.search,
                   ),
@@ -637,35 +730,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             ),
           ),
 
-          /// 🔥 Loading overlay (only on first load)
-          if (isLoading && selectedAddress == "Fetching your location...")
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: Card(
-                  margin: EdgeInsets.all(24),
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          color: Colors.deepOrange,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          "Fetching your location...",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          // Removed blocking loading overlay - map shows immediately
         ],
       ),
     );

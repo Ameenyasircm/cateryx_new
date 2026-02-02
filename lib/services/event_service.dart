@@ -148,6 +148,7 @@ class EventService {
 
         // BOYS → CONFIRMED_WORKS
         transaction.set(boyWorkRef, minimalEventData);
+        await fetchUpcomingEvents(boyId);
       });
     } on FirebaseException catch (e) {
       throw Exception('Firestore error: ${e.message}');

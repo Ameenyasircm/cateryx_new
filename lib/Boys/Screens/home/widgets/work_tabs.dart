@@ -10,6 +10,7 @@ import '../../../../core/utils/dialog_utils.dart';
 import '../../../../core/utils/loader/loader.dart';
 import '../../../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../../../../core/utils/text_utils.dart';
+import '../../../../Manager/Models/event_model.dart';
 import '../../../../services/event_service.dart';
 import '../work_details_screen.dart';
 
@@ -36,14 +37,34 @@ class WorkTabs extends StatelessWidget {
   }
 }
 
-class AvailableWorksTab extends StatelessWidget {
+class AvailableWorksTab extends StatefulWidget {
   final String userId;
-   AvailableWorksTab({super.key,required this.userId});
+  const AvailableWorksTab({super.key, required this.userId});
+  
+  @override
+  State<AvailableWorksTab> createState() => _AvailableWorksTabState();
+}
+
+class _AvailableWorksTabState extends State<AvailableWorksTab> {
   final EventService _service = EventService();
+  Future<List<EventModel>>? _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  void _loadEvents() {
+    setState(() {
+      _eventsFuture = _service.fetchUpcomingEvents(widget.userId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-        future: _service.fetchUpcomingEvents(userId),
+        future: _eventsFuture,
         builder: (context4, snapshot) {
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -67,8 +88,22 @@ class AvailableWorksTab extends StatelessWidget {
             final event = events[index];
             return  InkWell(
               onTap: () async {
-                callNext(WorkDetailsScreen(work:event, fromWhere: 'available',userId: userId ,), context);
-
+                // Navigate to details screen and wait for result
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WorkDetailsScreen(
+                      work: event,
+                      fromWhere: 'available',
+                      userId: widget.userId,
+                    ),
+                  ),
+                );
+                
+                // If work was taken, refresh the list
+                if (result == true) {
+                  _loadEvents();
+                }
               },
 
               child: WorkCard(
