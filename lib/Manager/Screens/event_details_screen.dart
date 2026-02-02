@@ -17,6 +17,7 @@ import '../Models/event_model.dart';
 import '../widgets/event_details_widgets.dart';
 import 'attendence_screen.dart';
 import 'event_payment_screen.dart';
+import 'note_screen.dart';
 
 class EventDetailedScreen extends StatefulWidget {
   final String eventID;
@@ -220,6 +221,17 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                                   finish(context);
 
 
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 10,),
+                            Expanded(
+                              child: _outlineButton(
+                                text: 'Add Notes',
+                                textColor: Colors.black,
+                                onTap: () async {
+                                  provider.listenNotes( provider.eventModel!.eventId);
+                                  callNext(NotesScreen(eventId:  provider.eventModel!.eventId,), context);
                                 },
                               ),
                             ),

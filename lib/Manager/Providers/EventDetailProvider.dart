@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
+import '../../models/note_model.dart';
+import '../../services/note_service.dart';
 import '../Models/closed_event_model.dart';
 import '../Models/payment_report_model.dart';
 
@@ -863,6 +865,34 @@ class EventDetailsProvider extends ChangeNotifier {
 
     isCaptainLoading = false;
     notifyListeners();
+  }
+
+  final NotesService _service = NotesService();
+
+  List<NoteModel> notesList = [];
+
+  void listenNotes(String eventId) {
+    _service.getNotes(eventId).listen((value) {
+      notesList = value;
+      notifyListeners();
+    });
+  }
+
+  Future<void> addNewNote({
+    required String eventId,
+    required String title,
+    required String description,
+  }) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final note = NoteModel(
+      id: id,
+      title: title,
+      description: description,
+      createdTime: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await _service.addNote(eventId: eventId, note: note);
   }
 
 
