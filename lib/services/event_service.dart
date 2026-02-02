@@ -166,15 +166,33 @@ class EventService {
           .orderBy('CONFIRMED_AT', descending: true)
           .get();
 
-      return snapshot.docs
-          .map((doc) => EventModel.fromMap(doc.data()))
-          .toList();
+      final results = await Future.wait(snapshot.docs.map((doc) async {
+        final data = doc.data();
+
+        final eventId = data['EVENT_ID'];
+        if (eventId == null || eventId.toString().isEmpty) return null;
+
+        final eventDoc = await _db.collection('EVENTS').doc(eventId).get();
+        if (!eventDoc.exists) return null;
+
+        final eventData = eventDoc.data() as Map<String, dynamic>?;
+        if (eventData == null) return null;
+
+        final status = eventData['STATUS'];
+        if (status == 'CLOSED') return null;
+
+        // ✅ return Event data
+        return EventModel.fromMap(eventData);
+      }));
+
+      return results.whereType<EventModel>().toList();
     } on FirebaseException catch (e) {
       throw Exception('Firestore error: ${e.message}');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
   }
+
 
 
 
