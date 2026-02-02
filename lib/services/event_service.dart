@@ -71,82 +71,91 @@ class EventService {
 
   /// Take a work
   Future<void> takeWork(String eventId, String boyId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String boyName = prefs.getString('boyName') ?? '';
-    final String boyPhone = prefs.getString('boyPhone') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String boyName = prefs.getString('boyName') ?? '';
+      final String boyPhone = prefs.getString('boyPhone') ?? '';
+      print("sssssssssssssss $boyId  $eventId");
+      
+      if (boyId.isEmpty) throw Exception('Boy not logged in');
 
-    if (boyId.isEmpty) throw Exception('Boy not logged in');
+      final eventRef = _db.collection('EVENTS').doc(eventId);
+      final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
+      final boyWorkRef = _db
+          .collection('BOYS')
+          .doc(boyId)
+          .collection('CONFIRMED_WORKS')
+          .doc(eventId);
 
-    final eventRef = _db.collection('EVENTS').doc(eventId);
-    final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
-    final boyWorkRef = _db
-        .collection('BOYS')
-        .doc(boyId)
-        .collection('CONFIRMED_WORKS')
-        .doc(eventId);
+      await _db.runTransaction((transaction) async {
+        // Read event document
+        final eventSnap = await transaction.get(eventRef);
+        if (!eventSnap.exists) throw Exception('Event not found');
 
-    await _db.runTransaction((transaction) async {
-      final eventSnap = await transaction.get(eventRef);
-      if (!eventSnap.exists) throw Exception('Event not found');
+        final data = eventSnap.data()!;
+        final int required = data['BOYS_REQUIRED'] ?? 0;
+        final int taken = data['BOYS_TAKEN'] ?? 0;
 
-      final data = eventSnap.data()!;
-      final int required = data['BOYS_REQUIRED'] ?? 0;
-      final int taken = data['BOYS_TAKEN'] ?? 0;
+        if (taken >= required) throw Exception('All slots filled');
 
-      if (taken >= required) throw Exception('All slots filled');
+        // Check duplicates (sequentially, to keep the transaction simple)
+        final confirmedBoySnap = await transaction.get(confirmedBoyRef);
+        final boyWorkSnap = await transaction.get(boyWorkRef);
 
-      // Check duplicates
-      final results = await Future.wait([
-        transaction.get(confirmedBoyRef),
-        transaction.get(boyWorkRef),
-      ]);
+        if (confirmedBoySnap.exists) throw Exception('Already took this work');
+        if (boyWorkSnap.exists) throw Exception('Work already exists');
 
-      if (results[0].exists) throw Exception('Already took this work');
-      if (results[1].exists) throw Exception('Work already exists');
+        final updatedTaken = taken + 1;
 
-      final updatedTaken = taken + 1;
+        // Update event TAKEN COUNT
+        final updateData = <String, dynamic>{
+          'BOYS_TAKEN': updatedTaken,
+        };
+        if (updatedTaken == required) {
+          updateData['BOYS_STATUS'] = 'FULL';
+        }
+        transaction.update(eventRef, updateData);
 
-      // Update event TAKEN COUNT
-      transaction.update(eventRef, {
-        'BOYS_TAKEN': updatedTaken,
-        if (updatedTaken == required) 'BOYS_STATUS': 'FULL',
+        /// -----------------------------------------------------------------
+        /// 🚀 STORE ONLY MINIMUM, IMPORTANT EVENT DATA
+        /// -----------------------------------------------------------------
+        final minimalEventData = {
+          'EVENT_ID': eventId,
+          'BOY_ID': boyId,
+
+          // Boy details
+          'BOY_NAME': boyName,
+          'BOY_PHONE': boyPhone,
+
+          // Status
+          'STATUS': 'CONFIRMED',
+          'ATTENDANCE_STATUS': 'PENDING',
+          'CONFIRMED_AT': FieldValue.serverTimestamp(),
+
+          // ⬇️ Only these four event fields will be saved
+          'EVENT_NAME': data['EVENT_NAME'],
+          'EVENT_DATE': data['EVENT_DATE'],
+          'EVENT_DATE_TS': data['EVENT_DATE_TS'],
+          'LOCATION_NAME': data['LOCATION_NAME'],
+          'LATITUDE': data['LATITUDE'],
+          'LONGITUDE': data['LONGITUDE'],
+          'MEAL_TYPE': data['MEAL_TYPE'],
+          'CLIENT_NAME': data['CLIENT_NAME'],
+        };
+
+        // EVENTS → CONFIRMED_BOYS
+        transaction.set(confirmedBoyRef, minimalEventData);
+
+        // BOYS → CONFIRMED_WORKS
+        transaction.set(boyWorkRef, minimalEventData);
       });
-
-      /// -----------------------------------------------------------------
-      /// 🚀 STORE ONLY MINIMUM, IMPORTANT EVENT DATA
-      /// -----------------------------------------------------------------
-      final minimalEventData = {
-        'EVENT_ID': eventId,
-        'BOY_ID': boyId,
-
-        // Boy details
-        'BOY_NAME': boyName,
-        'BOY_PHONE': boyPhone,
-
-        // Status
-        'STATUS': 'CONFIRMED',
-        'ATTENDANCE_STATUS': 'PENDING',
-        'CONFIRMED_AT': FieldValue.serverTimestamp(),
-
-        // ⬇️ Only these four event fields will be saved
-        'EVENT_NAME': data['EVENT_NAME'],
-        'EVENT_DATE': data['EVENT_DATE'],
-        'EVENT_DATE_TS': data['EVENT_DATE_TS'],
-        'LOCATION_NAME': data['LOCATION_NAME'],
-        'LATITUDE': data['LATITUDE'],
-        'LONGITUDE': data['LONGITUDE'],
-        'MEAL_TYPE': data['MEAL_TYPE'],
-        'CLIENT_NAME': data['CLIENT_NAME'],
-      };
-
-      // EVENTS → CONFIRMED_BOYS
-      transaction.set(confirmedBoyRef, minimalEventData);
-
-      // BOYS → CONFIRMED_WORKS
-      transaction.set(boyWorkRef, minimalEventData);
-    });
-    fetchUpcomingEvents(boyId);
+    } on FirebaseException catch (e) {
+      throw Exception('Firestore error: ${e.message}');
+    } catch (e) {
+      throw Exception('Error taking work: $e');
+    }
   }
+
   Future<List<EventModel>> fetchConfirmedWorks(String userId) async {
     try {
       final snapshot = await _db

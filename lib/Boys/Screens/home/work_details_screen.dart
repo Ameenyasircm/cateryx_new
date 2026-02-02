@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -19,9 +20,9 @@ import '../../../services/location_service.dart';
 
 class WorkDetailsScreen extends StatefulWidget {
   final EventModel work;
-  final String? userId;
+  final String userId;
   final String fromWhere;
-  const WorkDetailsScreen({super.key, required this.work,required this.fromWhere,this.userId});
+  const WorkDetailsScreen({super.key, required this.work,required this.fromWhere,required this.userId});
 
   @override
   State<WorkDetailsScreen> createState() => _WorkDetailsScreenState();
@@ -42,7 +43,33 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    // Load location in background - don't block UI
     loadLocation();
+  }
+
+  void _fitBounds() {
+    if (mapController == null || currentPosition == null) return;
+    
+    final bounds = LatLngBounds(
+      southwest: LatLng(
+        currentPosition!.latitude < widget.work.latitude 
+            ? currentPosition!.latitude 
+            : widget.work.latitude,
+        currentPosition!.longitude < widget.work.longitude 
+            ? currentPosition!.longitude 
+            : widget.work.longitude,
+      ),
+      northeast: LatLng(
+        currentPosition!.latitude > widget.work.latitude 
+            ? currentPosition!.latitude 
+            : widget.work.latitude,
+        currentPosition!.longitude > widget.work.longitude 
+            ? currentPosition!.longitude 
+            : widget.work.longitude,
+      ),
+    );
+    
+    mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
   }
 
   // ✅ FREE METHOD using OpenRouteService
@@ -51,8 +78,6 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
 
     setState(() {
       isPolylineLoading = true;
-      polylineCoordinates.clear();
-      routeDistance = null; // ✅ RESET distance
     });
 
     try {
@@ -68,11 +93,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
           'Authorization': openRouteServiceApiKey,
           'Content-Type': 'application/json',
         },
-      );
-
-      debugPrint("==================");
-      debugPrint("Response Status: ${response.statusCode}");
-      debugPrint("==================");
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -81,47 +102,33 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
         // ✅ EXTRACT DISTANCE (in meters, convert to km)
         final distanceInMeters = data['features'][0]['properties']['segments'][0]['distance'];
 
-        setState(() {
-          polylineCoordinates = coordinates
-              .map((coord) => LatLng(coord[1], coord[0]))
-              .toList();
-          routeDistance = distanceInMeters / 1000; // ✅ Convert to kilometers
-        });
-
-        debugPrint("✅ SUCCESS: ${polylineCoordinates.length} points loaded");
-        debugPrint("✅ DISTANCE: ${routeDistance!.toStringAsFixed(2)} km");
-      } else {
-        debugPrint("❌ FAILED: ${response.body}");
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Could not load route: ${response.statusCode}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            polylineCoordinates = coordinates
+                .map((coord) => LatLng(coord[1], coord[0]))
+                .toList();
+            routeDistance = distanceInMeters / 1000; // ✅ Convert to kilometers
+          });
         }
+      } else {
+        debugPrint("❌ FAILED: ${response.statusCode}");
       }
     } catch (e) {
       debugPrint("❌ EXCEPTION: $e");
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() {
+          isPolylineLoading = false;
+        });
       }
     }
-
-    setState(() {
-      isPolylineLoading = false;
-    });
   }
 
 
   Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude)
+          .timeout(const Duration(seconds: 5));
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
@@ -150,18 +157,44 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
 
     return '$latitude, $longitude';
   }
+  
   Future<void> loadLocation() async {
-    final position = await LocationService.getCurrentLocation();
-    if (!mounted) return;
+    // Load location in background - don't block UI
+    try {
+      final position = await LocationService.getCurrentLocation();
+      if (!mounted) return;
 
-    setState(() {
-      currentPosition = position;
-    });
-    currentLocationAddress = await getAddressFromCoordinates(
-      currentPosition!.latitude,
-      currentPosition!.longitude,
-    );
-    await getPolylineOpenRouteService();
+      setState(() {
+        currentPosition = position;
+      });
+      
+      // Fit bounds to show both markers
+      if (mapController != null) {
+        _fitBounds();
+      }
+      
+      // Load address (non-blocking)
+      getAddressFromCoordinates(
+        currentPosition!.latitude,
+        currentPosition!.longitude,
+      ).then((address) {
+        if (mounted) {
+          setState(() {
+            currentLocationAddress = address;
+          });
+        }
+      });
+      
+      // Load polyline (non-blocking)
+      getPolylineOpenRouteService();
+    } catch (e) {
+      debugPrint("Error loading location: $e");
+      if (mounted) {
+        setState(() {
+          currentLocationAddress = "Location unavailable";
+        });
+      }
+    }
   }
 
   @override
@@ -172,19 +205,22 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
         title: const Text('Work Details'),
         elevation: 0,
         actions: [
-          if (currentPosition != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: getPolylineOpenRouteService,
-              tooltip: 'Reload Route',
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              if (currentPosition != null) {
+                getPolylineOpenRouteService();
+              } else {
+                loadLocation();
+              }
+            },
+            tooltip: 'Reload Route',
+          ),
         ],
       ),
-      body: currentPosition == null
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
+      body: Column(
         children: [
-          /// MAP SECTION
+          /// MAP SECTION - Show immediately
           SizedBox(
             height: 280,
             width: double.infinity,
@@ -193,6 +229,10 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                 GoogleMap(
                   onMapCreated: (controller) {
                     mapController = controller;
+                    // Fit bounds to show both markers when available
+                    if (currentPosition != null) {
+                      _fitBounds();
+                    }
                   },
                   initialCameraPosition: CameraPosition(
                     target: LatLng(
@@ -212,16 +252,17 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                           BitmapDescriptor.hueRed),
                       infoWindow: const InfoWindow(title: 'Work Location'),
                     ),
-                    Marker(
-                      markerId: const MarkerId('me'),
-                      position: LatLng(
-                        currentPosition!.latitude,
-                        currentPosition!.longitude,
+                    if (currentPosition != null)
+                      Marker(
+                        markerId: const MarkerId('me'),
+                        position: LatLng(
+                          currentPosition!.latitude,
+                          currentPosition!.longitude,
+                        ),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(
+                            BitmapDescriptor.hueBlue),
+                        infoWindow: const InfoWindow(title: 'Your Location'),
                       ),
-                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                          BitmapDescriptor.hueBlue),
-                      infoWindow: const InfoWindow(title: 'Your Location'),
-                    ),
                   },
                   polylines: polylineCoordinates.isNotEmpty
                       ? {
@@ -326,7 +367,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                           : '${routeDistance!.toStringAsFixed(2)} km (${(routeDistance! * 0.621371).toStringAsFixed(2)} mi)',
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 80),
 
                     // _infoRow(
                     //   icon: Icons.route,
@@ -366,7 +407,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                 showLoader(context);
 
                 try {
-                  await _service.takeWork(widget.work.eventId, widget.userId??"");
+                  await _service.takeWork(widget.work.eventId, widget.userId);
 
                   hideLoader(context);
 
@@ -375,6 +416,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                   title: 'Success',
                   message: 'Work confirmed successfully',
                   );
+                  finish(context);
 
                 } catch (e) {
                   hideLoader(context);

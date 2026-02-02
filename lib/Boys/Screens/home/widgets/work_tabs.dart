@@ -67,7 +67,7 @@ class AvailableWorksTab extends StatelessWidget {
             final event = events[index];
             return  InkWell(
               onTap: () async {
-                callNext(WorkDetailsScreen(work:event, fromWhere: 'available' ,), context);
+                callNext(WorkDetailsScreen(work:event, fromWhere: 'available',userId: userId ,), context);
 
               },
 
