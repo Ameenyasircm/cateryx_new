@@ -13,6 +13,7 @@ class ManagerPaymentReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('$fromWhere Frommm');
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -61,18 +62,20 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       // ✅ Search
-                      TextFormField(
-                        decoration: InputDecoration(
-                          hintText: "Search Boy Name / Phone",
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      Visibility(visible: fromWhere!='boy',
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            hintText: "Search Boy Name / Phone",
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
+                          onChanged: (val) {
+                            // ✅ debounce effect (optional)
+                            pro.applyLocalSearch(val);
+                          },
                         ),
-                        onChanged: (val) {
-                          // ✅ debounce effect (optional)
-                          pro.applyLocalSearch(val);
-                        },
                       ),
 
                       AppSpacing.h10,

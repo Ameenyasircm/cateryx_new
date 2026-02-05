@@ -17,7 +17,7 @@ class ClosedEventsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<EventDetailsProvider>();
-
+    print('$fromWhere From  ');
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -77,8 +77,11 @@ class ClosedEventsScreen extends StatelessWidget {
         final event = provider.closedEventsList[index];
         return InkWell(
             onTap: (){
-              provider.setClosedEventModelData(event);
-              callNext(ClosedEventDetailsScreen(), context);
+              if(fromWhere!='boy'){
+                provider.setClosedEventModelData(event);
+                callNext(ClosedEventDetailsScreen(), context);
+              }
+
             },
             child: _ClosedEventCard(event: event));
       },

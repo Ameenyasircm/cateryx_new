@@ -29,7 +29,7 @@ class WorkTabs extends StatelessWidget {
           unselectedLabelColor: Colors.grey,
           tabs: [
             Tab(text: 'Available Works',),
-            Tab(text: 'Confirmed Work'),
+            Tab(text: 'My Works'),
           ],
         ),
       ],

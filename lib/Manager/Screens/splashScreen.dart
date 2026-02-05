@@ -115,17 +115,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
-          const Positioned(
-            bottom: 60,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE64A19)),
-                strokeWidth: 2,
-              ),
-            ),
-          ),
+          // const Positioned(
+          //   bottom: 60,
+          //   left: 0,
+          //   right: 0,
+          //   child: Center(
+          //     child: CircularProgressIndicator(
+          //       valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE64A19)),
+          //       strokeWidth: 2,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

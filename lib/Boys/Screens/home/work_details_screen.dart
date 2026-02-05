@@ -433,7 +433,7 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
                 ),
               ),
               child: const Text(
-                "Take Work",
+                "Confirm Work",
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
