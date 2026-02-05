@@ -21,7 +21,7 @@ class BoysListScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          "Registered Boys",
+          "My Boys",
           style: TextStyle(
             color: primaryBlue,
             fontWeight: FontWeight.bold,

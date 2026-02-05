@@ -150,7 +150,7 @@ class ManagerHomeScreen extends StatelessWidget {
 
           /// RUNNING EVENTS (INDEX 0)
           _tabItem(
-            title: "Confirmed Events",
+            title: "Published Works",
             isSelected: provider.selectedTabIndex == 0,
             onTap: () {
               provider.fetchRunningEvents();
@@ -160,7 +160,7 @@ class ManagerHomeScreen extends StatelessWidget {
 
           /// UPCOMING EVENTS (INDEX 1)
           _tabItem(
-            title: "Upcoming Events",
+            title: "Upcoming Works",
             isSelected: provider.selectedTabIndex == 1,
             onTap: () {
               provider.fetchUpcomingEvents();

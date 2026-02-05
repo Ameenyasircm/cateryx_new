@@ -95,21 +95,21 @@ class RegisterBoyScreen extends StatelessWidget {
                     validator: (v) => v!.isEmpty ? "Required field" : null,
                   ),
 
-                  const SizedBox(height: 15),
-
-                  _label("Blood Group"),
-                  DropdownButtonFormField<String>(
-                    value: provider.selectedBloodGroup,
-                    decoration: _decoration("", Icons.bloodtype),
-                    items: [
-                      "A+","A-","B+","B-","O+","O-","AB+","AB-"
-                    ].map((e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(e),
-                    )).toList(),
-                    onChanged: (v) => provider.changeBloodGroup(v!),
-                    validator: (v) => v == null ? "Select blood group" : null,
-                  ),
+                  // const SizedBox(height: 15),
+                  //
+                  // _label("Blood Group"),
+                  // DropdownButtonFormField<String>(
+                  //   value: provider.selectedBloodGroup,
+                  //   decoration: _decoration("", Icons.bloodtype),
+                  //   items: [
+                  //     "A+","A-","B+","B-","O+","O-","AB+","AB-"
+                  //   ].map((e) => DropdownMenuItem(
+                  //     value: e,
+                  //     child: Text(e),
+                  //   )).toList(),
+                  //   onChanged: (v) => provider.changeBloodGroup(v!),
+                  //   validator: (v) => v == null ? "Select blood group" : null,
+                  // ),
 
                   const SizedBox(height: 15),
 
@@ -151,11 +151,11 @@ class RegisterBoyScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 15),
-                  _label("New Password"),
+                  _label("Create Password"),
                   TextFormField(
                     controller: provider.passwordController,
                     obscureText: provider.obscurePassword,
-                    decoration: _decoration("Enter new password", Icons.lock).copyWith(
+                    decoration: _decoration("Enter password", Icons.lock).copyWith(
                       suffixIcon: IconButton(
                         icon: Icon(
                           provider.obscurePassword ? Icons.visibility_off : Icons.visibility,

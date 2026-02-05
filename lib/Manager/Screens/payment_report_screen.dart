@@ -147,15 +147,15 @@ class ManagerPaymentReportScreen extends StatelessWidget {
 
                               columns: [
                                 DataColumn(label: Text("Sl.No", style: headerStyle)),
-                                DataColumn(label: Text("Date Time", style: headerStyle)),
+                                DataColumn(label: Text("Event Date", style: headerStyle)),
+                                DataColumn(label: Text("Event", style: headerStyle)),
+                                DataColumn(label: Text("Amount", style: headerStyle)),
+                                DataColumn(label: Text("Location", style: headerStyle)),
+                                DataColumn(label: Text("Payment Date", style: headerStyle)),
                                 if (fromWhere != "boy")
                                 DataColumn(label: Text("Boy Name", style: headerStyle)),
                                 if (fromWhere != "boy")
                                 DataColumn(label: Text("Boy Phone", style: headerStyle)),
-                                DataColumn(label: Text("Amount", style: headerStyle)),
-                                DataColumn(label: Text("Location", style: headerStyle)),
-                                DataColumn(label: Text("Event", style: headerStyle)),
-                                DataColumn(label: Text("Event Date", style: headerStyle)),
 
                               ],
                               rows: pro.reportList.asMap().entries.map((entry) {
@@ -164,16 +164,16 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                                 return DataRow(
                                   cells: [
                                     DataCell(Text("${index + 1}", style: rowStyle)),
+                                    DataCell(Text(m.eventDate, style: rowStyle)),
+                                    DataCell(Text(m.eventName, style: rowStyle)),
+                                    DataCell(Text(m.paymentAmount.toString(), style: rowStyle)),
+                                    DataCell(Text(m.locationName, style: rowStyle)),
                                     DataCell(Text(pro.formatDateTime(m.paymentUpdatedAt),
                                         style: rowStyle)),
                                     if (fromWhere != "boy")
                                     DataCell(Text(m.boyName, style: rowStyle)),
                                     if (fromWhere != "boy")
                                     DataCell(Text(m.boyPhone, style: rowStyle)),
-                                    DataCell(Text(m.paymentAmount.toString(), style: rowStyle)),
-                                    DataCell(Text(m.locationName, style: rowStyle)),
-                                    DataCell(Text(m.eventName, style: rowStyle)),
-                                    DataCell(Text(m.eventDate, style: rowStyle)),
 
                                   ],
                                 );

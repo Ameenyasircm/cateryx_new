@@ -151,7 +151,7 @@ class BoysProvider extends ChangeNotifier{
         "GUARDIAN_PHONE": guardianController.text.trim(),
         "DOB": dobController.text.trim(),
         "DOB_TS": Timestamp.fromDate(dobDateTime!),
-        "BLOOD_GROUP": selectedBloodGroup,
+        // "BLOOD_GROUP": selectedBloodGroup,
         "PLACE": placeController.text.trim(),
         "DISTRICT": districtController.text.trim(),
         "PIN_CODE": pinController.text.trim(),

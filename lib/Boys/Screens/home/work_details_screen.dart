@@ -8,8 +8,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import '../../../Constants/colors.dart';
 import '../../../Manager/Models/event_model.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/alert_utils.dart';
 import '../../../core/utils/dialog_utils.dart';
 import '../../../core/utils/extensions/context_extensions.dart';
@@ -326,26 +328,57 @@ class _WorkDetailsScreenState extends State<WorkDetailsScreen> {
 
                     /// DESCRIPTION
                     Text(
+                      'Description',
+                      style: AppTypography.caption.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.sp
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
                       widget.work.description,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
 
                     const SizedBox(height: 24),
 
+                    _infoRow(
+                        icon: Icons.date_range_outlined,
+                        label: 'Event Date',
+                        // value:widget.work.eventDate
+                        value:DateFormat("dd-MMMM-yyyy").format(widget.work.eventDateTs.toDate())
+
+                    ),
+                    const SizedBox(height: 12),
+                    _infoRow(
+                        icon: Icons.access_time_sharp,
+                        label: 'Event Time',
+                        value:widget.work.mealType
+                    ),
+                    const SizedBox(height: 12),
+                    _infoRow(
+                        icon: Icons.location_on,
+                        label: 'Work Location',
+                        value:widget.work.locationName
+                      // '${widget.work.latitude}, ${widget.work.longitude}',
+                    ),
+                    const SizedBox(height: 12),
+                    _infoRow(
+                      icon: Icons.people_outline,
+                      label: 'Boys',
+                      value: "${widget.work.boysTaken}/${widget.work.boysRequired}",
+                    ),
+                    const SizedBox(height: 12),
+                    /// INFO ROWS
 
                     _infoRow(
                       icon: Icons.person_2_outlined,
                       label: 'Client Name',
                       value: widget.work.clientName,
                     ),
-                    const SizedBox(height: 12),
-                    /// INFO ROWS
-                    _infoRow(
-                      icon: Icons.location_on,
-                      label: 'Work Location',
-                      value:widget.work.locationName
-                      // '${widget.work.latitude}, ${widget.work.longitude}',
-                    ),
+
+
+
 
                     const SizedBox(height: 12),
 
