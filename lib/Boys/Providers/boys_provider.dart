@@ -7,9 +7,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../Constants/my_functions.dart';
 import '../../Manager/Providers/EventDetailProvider.dart';
@@ -38,6 +40,8 @@ class BoysProvider extends ChangeNotifier{
   TextEditingController wageController = TextEditingController();
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
+  File? aadhaarPhoto;
+  final ImagePicker _imagePicker = ImagePicker();
 
   BoysProvider(){
     getAppVersion();
@@ -74,6 +78,51 @@ class BoysProvider extends ChangeNotifier{
       dobController.text =
       "${picked.day}/${picked.month}/${picked.year}";
       notifyListeners();
+    }
+  }
+
+  Future<void> pickAadhaarPhoto(BuildContext context) async {
+    try {
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () => Navigator.of(context).pop(ImageSource.camera),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      if (source != null) {
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: source,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          aadhaarPhoto = File(pickedFile.path);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error picking image: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to pick image")),
+        );
+      }
     }
   }
 
@@ -143,6 +192,38 @@ class BoysProvider extends ChangeNotifier{
       /// ✅ STEP 2: REGISTER BOY
       final boyId = "BOY${DateTime.now().millisecondsSinceEpoch}";
 
+      /// ✅ STEP 3: UPLOAD AADHAAR PHOTO (if provided)
+      String? aadhaarPhotoUrl;
+      if (aadhaarPhoto != null) {
+        try {
+          final supabase = Supabase.instance.client;
+          final filePath = '$boyId.jpg';
+          
+          // Upload to Supabase Storage (pass File directly)
+          await supabase.storage
+              .from('boys_aadhaar')
+              .upload(filePath, aadhaarPhoto!, fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: false,
+              ));
+          
+          // Get public URL
+          final publicUrl = supabase.storage
+              .from('boys_aadhaar')
+              .getPublicUrl(filePath);
+          
+          aadhaarPhotoUrl = publicUrl;
+        } catch (e) {
+          debugPrint("Error uploading Aadhaar photo: $e");
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Failed to upload Aadhaar photo: ${e.toString()}")),
+            );
+          }
+          return;
+        }
+      }
+
       Map<String, dynamic> map = {
         "BOY_ID": boyId,
         "NAME": name,
@@ -162,6 +243,11 @@ class BoysProvider extends ChangeNotifier{
         // 🔥 Add final merged keywords
         "SEARCH_KEYWORDS": finalKeywords,
       };
+
+      // Add Aadhaar photo URL if uploaded
+      if (aadhaarPhotoUrl != null) {
+        map["AADHAAR_PHOTO_URL"] = aadhaarPhotoUrl;
+      }
 
       // -------------------------------------------------------
       // 🔥 ADD WAGE (Manager gives real wage, others = 0)
@@ -343,6 +429,7 @@ class BoysProvider extends ChangeNotifier{
 
     selectedBloodGroup = null;
     dobDateTime = null;
+    aadhaarPhoto = null;
 
     notifyListeners();
   }

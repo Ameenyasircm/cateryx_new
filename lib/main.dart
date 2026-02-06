@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'Boys/Providers/boys_provider.dart';
 import 'Boys/Screens/navbar/boy_bottomNav.dart';
 import 'Manager/Providers/EventDetailProvider.dart';
@@ -16,7 +17,10 @@ import 'Manager/Screens/splashScreen.dart';
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Supabase.initialize(
+    url: 'https://awtcvvdjhoxinfjfaqsb.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3dGN2dmRqaG94aW5mamZhcXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODc5OTAsImV4cCI6MjA4NTk2Mzk5MH0.sy4F-UIb1IsIyqXaJkIjzy6rASX8_Evwp4a4em7bXjs',
+  );
   // Wrap everything in try-catch for debugging
   try {
     // Set preferred orientations

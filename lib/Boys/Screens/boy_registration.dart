@@ -5,7 +5,7 @@ import '../Providers/boys_provider.dart';
 
 class RegisterBoyScreen extends StatelessWidget {
   final String registeredBy;
-  RegisterBoyScreen({Key? key,required this.registeredBy}) : super(key: key);
+  RegisterBoyScreen({super.key,required this.registeredBy});
 
   final formKey = GlobalKey<FormState>();
 
@@ -151,6 +151,10 @@ class RegisterBoyScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 15),
+                  _label("Aadhaar Proof Photo"),
+                  _aadhaarPhotoUpload(),
+
+                  const SizedBox(height: 15),
                   _label("Create Password"),
                   TextFormField(
                     controller: provider.passwordController,
@@ -275,6 +279,80 @@ class RegisterBoyScreen extends StatelessWidget {
       maxLength: maxLength,
       decoration: _decoration(hint, icon),
       validator: (v) => v!.isEmpty ? "Required field" : null,
+    );
+  }
+
+  Widget _aadhaarPhotoUpload() {
+    return Consumer<BoysProvider>(
+      builder: (context, provider, _) {
+        return GestureDetector(
+          onTap: () => provider.pickAadhaarPhoto(context),
+          child: Container(
+            height: 150,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: provider.aadhaarPhoto != null
+                    ? const Color(0xff1A237E)
+                    : Colors.grey[300]!,
+                width: 2,
+              ),
+            ),
+            child: provider.aadhaarPhoto != null
+                ? Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(
+                          provider.aadhaarPhoto!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            provider.aadhaarPhoto = null;
+                            provider.notifyListeners();
+                          },
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black54,
+                            padding: const EdgeInsets.all(4),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate,
+                        size: 48,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Tap to upload Aadhaar photo",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }
