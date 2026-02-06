@@ -116,6 +116,11 @@ dependencies {
     implementation platform("com.google.firebase:firebase-bom:33.2.0")
     implementation "com.google.firebase:firebase-analytics"
     implementation "androidx.appcompat:appcompat:1.4.0"
+    // Pin AndroidX versions to avoid requiring a newer Android Gradle Plugin
+    implementation "androidx.core:core:1.12.0"
+    implementation "androidx.core:core-ktx:1.12.0"
+    implementation "androidx.activity:activity:1.8.2"
+    implementation "androidx.activity:activity-ktx:1.8.2"
     implementation "com.google.firebase:firebase-crashlytics"
     implementation "com.google.android.material:material:1.11.0"
     // ✅ Required for flutter_local_notifications (must be >= 2.1.4)

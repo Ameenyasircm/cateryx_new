@@ -206,24 +206,36 @@ class RegisterBoyScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (!formKey.currentState!.validate()) return;
-                        provider.registerNewBoyFun(context,registeredBy);
-                      },
+                      onPressed: provider.isRegisteringBoy
+                          ? null
+                          : () {
+                              if (!formKey.currentState!.validate()) return;
+                              provider.registerNewBoyFun(context, registeredBy);
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryOrange,
+                        disabledBackgroundColor: Colors.grey[400],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        "Submit",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: provider.isRegisteringBoy
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              "Submit",
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -341,11 +353,14 @@ class RegisterBoyScreen extends StatelessWidget {
                         color: Colors.grey[600],
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        "Tap to upload Aadhaar photo",
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          "Tap to upload Aadhaar photo",
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],

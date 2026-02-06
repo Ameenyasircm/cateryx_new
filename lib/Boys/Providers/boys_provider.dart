@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cateryyx/Boys/Screens/home/boy_home.dart';
 import 'package:cateryyx/Manager/Screens/splashScreen.dart';
+import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -42,6 +43,7 @@ class BoysProvider extends ChangeNotifier{
   bool obscureConfirmPassword = true;
   File? aadhaarPhoto;
   final ImagePicker _imagePicker = ImagePicker();
+  bool isRegisteringBoy = false;
 
   BoysProvider(){
     getAppVersion();
@@ -89,6 +91,7 @@ class BoysProvider extends ChangeNotifier{
           return SafeArea(
             child: Wrap(
               children: [
+                AppSpacing.h10,
                 ListTile(
                   leading: const Icon(Icons.photo_library),
                   title: const Text('Gallery'),
@@ -147,6 +150,10 @@ class BoysProvider extends ChangeNotifier{
         return;
       }
 
+      // Set loading state
+      isRegisteringBoy = true;
+      notifyListeners();
+
       /// 🔍 STEP 1: CHECK PHONE ALREADY EXISTS
       final phoneCheck = await db
           .collection("BOYS")
@@ -155,6 +162,8 @@ class BoysProvider extends ChangeNotifier{
           .get();
 
       if (phoneCheck.docs.isNotEmpty) {
+        isRegisteringBoy = false;
+        notifyListeners();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("This phone number is already registered"),
@@ -214,6 +223,8 @@ class BoysProvider extends ChangeNotifier{
           
           aadhaarPhotoUrl = publicUrl;
         } catch (e) {
+          isRegisteringBoy = false;
+          notifyListeners();
           debugPrint("Error uploading Aadhaar photo: $e");
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -312,6 +323,9 @@ class BoysProvider extends ChangeNotifier{
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to register boy")),
       );
+    } finally {
+      isRegisteringBoy = false;
+      notifyListeners();
     }
   }
 
