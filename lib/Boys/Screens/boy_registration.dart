@@ -40,7 +40,8 @@ class RegisterBoyScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
+                  Center(child: _boyPhotoUpload()),
+                  const SizedBox(height: 15),
                   _label("Boy Name"),
                   _textField(
                     provider.boyNameController,
@@ -370,4 +371,136 @@ class RegisterBoyScreen extends StatelessWidget {
       },
     );
   }
+
+  Widget _boyPhotoUpload() {
+    return Consumer<BoysProvider>(  // Replace with your provider name
+      builder: (context, provider, _) {
+        return Center(
+          child: GestureDetector(
+            onTap: () => provider.pickBoyPhoto(context),
+            child: Stack(
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[100],
+                    border: Border.all(
+                      color: provider.boyPhoto != null
+                          ? const Color(0xff1A237E)
+                          : Colors.grey[300]!,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: provider.boyPhoto != null
+                        ? Image.file(
+                      provider.boyPhoto!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    )
+                        : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 30,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Add Photo",
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Camera/Edit Icon
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 33,
+                    height: 33,
+                    decoration: BoxDecoration(
+                      color: const Color(0xff1A237E),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      provider.boyPhoto != null
+                          ? Icons.edit
+                          : Icons.camera_alt,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                // Remove button (only shown when photo exists)
+                if (provider.boyPhoto != null)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        provider.clearBoyPhoto();
+                      },
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }

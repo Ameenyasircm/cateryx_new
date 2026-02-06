@@ -42,6 +42,7 @@ class BoysProvider extends ChangeNotifier{
   bool obscurePassword = true;
   bool obscureConfirmPassword = true;
   File? aadhaarPhoto;
+  File? boyPhoto;
   final ImagePicker _imagePicker = ImagePicker();
   bool isRegisteringBoy = false;
 
@@ -129,6 +130,56 @@ class BoysProvider extends ChangeNotifier{
     }
   }
 
+  Future<void> pickBoyPhoto(BuildContext context) async {
+    try {
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Wrap(
+              children: [
+                AppSpacing.h10,
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Gallery'),
+                  onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text('Camera'),
+                  onTap: () => Navigator.of(context).pop(ImageSource.camera),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      if (source != null) {
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: source,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          boyPhoto = File(pickedFile.path);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error picking boy photo: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to pick image")),
+        );
+      }
+    }
+  }
+  void clearBoyPhoto() {
+    boyPhoto = null;
+    notifyListeners();
+  }
+
 
   Future<void> registerNewBoyFun(BuildContext context, String from) async {
     try {
@@ -201,12 +252,46 @@ class BoysProvider extends ChangeNotifier{
       /// ✅ STEP 2: REGISTER BOY
       final boyId = "BOY${DateTime.now().millisecondsSinceEpoch}";
 
-      /// ✅ STEP 3: UPLOAD AADHAAR PHOTO (if provided)
+      /// ✅ STEP 3: UPLOAD BOY PHOTO (if provided)
+      String? boyPhotoUrl;
+      if (boyPhoto != null) {
+        try {
+          final supabase = Supabase.instance.client;
+          final filePath = 'profile_$boyId.jpg';
+          
+          // Upload to Supabase Storage (pass File directly)
+          await supabase.storage
+              .from('boys_aadhaar')
+              .upload(filePath, boyPhoto!, fileOptions: const FileOptions(
+                contentType: 'image/jpeg',
+                upsert: false,
+              ));
+          
+          // Get public URL
+          final publicUrl = supabase.storage
+              .from('boys_aadhaar')
+              .getPublicUrl(filePath);
+          
+          boyPhotoUrl = publicUrl;
+        } catch (e) {
+          isRegisteringBoy = false;
+          notifyListeners();
+          debugPrint("Error uploading boy photo: $e");
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Failed to upload boy photo: ${e.toString()}")),
+            );
+          }
+          return;
+        }
+      }
+
+      /// ✅ STEP 4: UPLOAD AADHAAR PHOTO (if provided)
       String? aadhaarPhotoUrl;
       if (aadhaarPhoto != null) {
         try {
           final supabase = Supabase.instance.client;
-          final filePath = '$boyId.jpg';
+          final filePath = 'aadhaar_$boyId.jpg';
           
           // Upload to Supabase Storage (pass File directly)
           await supabase.storage
@@ -254,6 +339,11 @@ class BoysProvider extends ChangeNotifier{
         // 🔥 Add final merged keywords
         "SEARCH_KEYWORDS": finalKeywords,
       };
+
+      // Add boy photo URL if uploaded
+      if (boyPhotoUrl != null) {
+        map["BOY_PHOTO_URL"] = boyPhotoUrl;
+      }
 
       // Add Aadhaar photo URL if uploaded
       if (aadhaarPhotoUrl != null) {
@@ -444,6 +534,7 @@ class BoysProvider extends ChangeNotifier{
     selectedBloodGroup = null;
     dobDateTime = null;
     aadhaarPhoto = null;
+    boyPhoto = null;
 
     notifyListeners();
   }
