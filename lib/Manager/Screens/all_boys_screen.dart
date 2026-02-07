@@ -10,65 +10,79 @@ class BoysListScreen extends StatelessWidget {
   const BoysListScreen({super.key});
 
   @override
-
-  @override
   Widget build(BuildContext context) {
     const primaryBlue = Color(0xff1A237E);
     const primaryOrange = Color(0xffE65100);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "My Boys",
-          style: TextStyle(
-            color: primaryBlue,
-            fontWeight: FontWeight.bold,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            "My Boys",
+            style: TextStyle(
+              color: primaryBlue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person_add, color: primaryOrange),
+              onPressed: () {},
+            ),
+          ],
+          bottom: const TabBar(
+            labelColor: primaryOrange,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: primaryOrange,
+            tabs: [
+              Tab(text: "Active Boys"),
+              Tab(text: "Blocked Boys"),
+            ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add, color: primaryOrange),
-            onPressed: () {
-              // Navigate to Register Boy Screen
-            },
-          ),
-        ],
-      ),
-      body: Consumer<BoysProvider>(
-        builder: (context, provider, _) {
+        body: Consumer<BoysProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoadingBoys) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (provider.isLoadingBoys) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            final activeBoys = provider.filterBoysList
+                .where((b) => b['BLOCK_STATUS'] != "BLOCKED")
+                .toList();
 
-          return Column(
-            children: [
-              /// 🔍 ALWAYS VISIBLE
-              _searchBar(provider),
+            final blockedBoys = provider.filterBoysList
+                .where((b) => b['BLOCK_STATUS'] == "BLOCKED")
+                .toList();
 
-              Expanded(
-                child: provider.filterBoysList.isEmpty
-                    ? _emptyState()
-                    : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: provider.filterBoysList.length,
-                  itemBuilder: (context, index) {
-                    final boy = provider.filterBoysList[index];
-                    return InkWell(
-                        onTap: (){
-                          callNext(BoyDetailsScreen(boy: boy),context);
-                        },
-                        child: _boyCard(boy));
-                  },
+            return Column(
+              children: [
+                _searchBar(provider),
+
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      /// ACTIVE BOYS TAB
+                      _boysList(
+                        context,
+                        activeBoys,
+                      ),
+
+                      /// BLOCKED BOYS TAB
+                      _boysList(
+                        context,
+                        blockedBoys,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
-
     );
   }
 
@@ -92,8 +106,28 @@ class BoysListScreen extends StatelessWidget {
     );
   }
 
-  /// 👤 Boy Card
-  Widget _boyCard(Map<String, dynamic> boy) {
+  /// ⭐ UNIVERSAL LIST BUILDER (No Block/Unblock)
+  Widget _boysList(BuildContext context, List<Map<String, dynamic>> boysList) {
+    if (boysList.isEmpty) return _emptyState();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: boysList.length,
+      itemBuilder: (context, index) {
+        final boy = boysList[index];
+        return InkWell(
+          onTap: () => callNext(BoyDetailsScreen(boy: boy), context),
+          child: _boyCard(
+            context,
+            boy,
+          ),
+        );
+      },
+    );
+  }
+
+  /// 👤 Boy Card (Only info + call + WhatsApp)
+  Widget _boyCard(BuildContext context, Map<String, dynamic> boy) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -115,8 +149,7 @@ class BoysListScreen extends StatelessWidget {
           CircleAvatar(
             radius: 26,
             backgroundColor: const Color(0xff1A237E).withOpacity(0.1),
-            child: const Icon(Icons.person,
-                size: 30, color: Color(0xff1A237E)),
+            child: const Icon(Icons.person, size: 30, color: Color(0xff1A237E)),
           ),
 
           const SizedBox(width: 14),
@@ -126,34 +159,22 @@ class BoysListScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  boy['NAME'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(boy['NAME'] ?? '',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(
-                  boy['PHONE'] ?? '',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
+                Text(boy['PHONE'] ?? '',
+                    style: const TextStyle(fontSize: 13, color: Colors.grey)),
                 const SizedBox(height: 4),
-                Text(
-                  "${boy['PLACE'] ?? ''}, ${boy['DISTRICT'] ?? ''}",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
+                Text("${boy['PLACE'] ?? ''}, ${boy['DISTRICT'] ?? ''}",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ),
 
-          /// ☎️ Action Buttons
+          const SizedBox(width: 8),
+
+          /// ☎️ CALL / WHATSAPP ONLY
           Row(
             children: [
               IconButton(
@@ -177,16 +198,13 @@ class BoysListScreen extends StatelessWidget {
 
   /// 📭 Empty State UI
   Widget _emptyState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.group_off, size: 60, color: Colors.grey),
           SizedBox(height: 10),
-          Text(
-            "No boys registered yet",
-            style: TextStyle(color: Colors.grey),
-          ),
+          Text("No data", style: TextStyle(color: Colors.grey)),
         ],
       ),
     );

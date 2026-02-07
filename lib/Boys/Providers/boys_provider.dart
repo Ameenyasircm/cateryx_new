@@ -821,5 +821,19 @@ class BoysProvider extends ChangeNotifier{
     notifyListeners();
   }
 
+  Future<void> blockBoy(String boyId) async {
+    await db.collection("BOYS").doc(boyId).update({
+      "BLOCK_STATUS": "BLOCKED",
+    });
+    fetchBoys();
+  }
+
+  Future<void> unblockBoy(String boyId) async {
+    await db.collection("BOYS").doc(boyId).update({
+      "BLOCK_STATUS": "ACTIVE",
+    });
+    fetchBoys();
+  }
+
 
 }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../Boys/Providers/boys_provider.dart';
+import '../../Boys/Screens/Block/block_boy.dart';
 import '../../Boys/Screens/navbar/boy_bottomNav.dart';
 import '../../Boys/Screens/home/boy_home.dart';
 import '../../Boys/Screens/pending_admin_approval.dart';
@@ -81,53 +82,73 @@ class LoginProvider extends ChangeNotifier{
           );
         }
       }
-      else{
-        print('$phone OIJDOEIJFR $password');
+      else {
+        print('$phone LOGIN CHECK $password');
 
         QuerySnapshot query = await db
             .collection("BOYS")
             .where("PHONE", isEqualTo: phone)
             .where("PASSWORD", isEqualTo: password)
+            .limit(1)
             .get();
 
         if (query.docs.isNotEmpty) {
           Map<dynamic, dynamic> dataMap = query.docs.first.data() as Map;
           SharedPreferences prefs = await SharedPreferences.getInstance();
-          String adminID = query.docs.first.id;
-          String adminName = dataMap['NAME'] ?? "";
+
+          String boyID = query.docs.first.id;
+          String boyName = dataMap['NAME'] ?? "";
+
+          // 🔥 Save Local Login Data
           await prefs.setString('phone_number', phone);
           await prefs.setString('password', password);
-
-          await prefs.setString('adminName', adminName);
-          await prefs.setString('adminID', adminID);
-
-          await prefs.setString('boyName', adminName);
-          await prefs.setString('boyID', adminID);
+          await prefs.setString('boyName', boyName);
+          await prefs.setString('boyID', boyID);
           await prefs.setString('boyPhone', phone);
 
-          print('$phone NFRJFERF $adminID');
+          // also set as admin (you already used)
+          await prefs.setString('adminName', boyName);
+          await prefs.setString('adminID', boyID);
 
-          final boysProvder =
-          Provider.of<BoysProvider>(context, listen: false);
+          print('$phone LOGIN SUCCESS → $boyID');
 
-          if(dataMap['STATUS']=='APPROVED'){
-            callNextReplacement(BoyBottomNavBar(boyID: adminID, boyName: adminName, boyPhone: phone,isLockBool: false,), context);
+          final boysProvider = Provider.of<BoysProvider>(context, listen: false);
 
-          }else{
-            callNextReplacement(PendingAdminApproval(), context);
-
+          // 🚫 1. BLOCKED CHECK
+          if (dataMap['BLOCK_STATUS'] == "BLOCKED") {
+            callNextReplacement(const BoyBlockedScreen(), context);
+            return;
           }
 
-        } else {
-          // 4. Failure: No match found
+          // ✅ 2. APPROVED CHECK
+          if (dataMap['STATUS'] == "APPROVED") {
+            callNextReplacement(
+              BoyBottomNavBar(
+                boyID: boyID,
+                boyName: boyName,
+                boyPhone: phone,
+                isLockBool: false,
+              ),
+              context,
+            );
+          }
+          // 🕒 3. PENDING APPROVAL
+          else {
+            callNextReplacement(PendingAdminApproval(), context);
+          }
+
+        }
+        // ❌ INVALID CREDENTIALS
+        else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Invalid Credentials or you are not a Manager"),
+              content: Text("Invalid Credentials"),
               backgroundColor: Colors.red,
             ),
           );
         }
       }
+
     } catch (e) {
       print("Login Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
