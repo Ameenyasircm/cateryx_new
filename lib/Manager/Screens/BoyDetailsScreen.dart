@@ -1,4 +1,5 @@
 import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/Manager/Screens/payment_report_screen.dart';
 import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:cateryyx/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class BoyDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final boysProvider = context.watch<BoysProvider>();
+    ManagerProvider managerProvider = Provider.of<ManagerProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -59,6 +61,38 @@ class BoyDetailsScreen extends StatelessWidget {
                 icon: const Icon(Icons.history, color: Colors.white),
                 label: const Text(
                   "View Work History",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+            SizedBox(height: 10,),
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 20),
+              child: ElevatedButton.icon(
+                onPressed: (){
+                  managerProvider.clearFilters();
+                  managerProvider.fetchFirstPage(boyId: boy['BOY_ID']);
+                  callNext(
+                    ManagerPaymentReportScreen(fromWhere: 'boy', boyId: boy['BOY_ID']),
+                    context,
+                  );
+                },
+                icon: const Icon(Icons.history, color: Colors.white),
+                label: const Text(
+                  "Payment History",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
