@@ -103,6 +103,7 @@ class ManagerProvider extends ChangeNotifier{
 
   PublishType publishType = PublishType.now;
 
+  bool isSavingEvent = false;
   void changePublishType(PublishType type) {
     publishType = type;
     notifyListeners();
@@ -117,6 +118,9 @@ class ManagerProvider extends ChangeNotifier{
     }
 
     try {
+      isSavingEvent = true;
+      notifyListeners();
+
       final String eventId = "EVT${DateTime.now().millisecondsSinceEpoch}";
       final String eventName = nameController.text.trim();
       final String location = locationController.text.trim();
@@ -124,28 +128,20 @@ class ManagerProvider extends ChangeNotifier{
       // ------------------------------
       // 🔥 Generate Search Keywords
       // ------------------------------
-
-      /// 1. Event name keywords
       List<String> eventKeywords = generateKeywords(eventName);
-
-      /// 2. Event name word-wise
       if (eventName.contains(" ")) {
         eventName.split(" ").forEach((word) {
           eventKeywords.addAll(generateKeywords(word));
         });
       }
 
-      /// 3. Location keywords
       List<String> locationKeywords = generateKeywords(location);
-
-      /// 4. Location word-wise
       if (location.contains(" ")) {
         location.split(" ").forEach((word) {
           locationKeywords.addAll(generateKeywords(word));
         });
       }
 
-      /// 5. Merge both & remove duplicates
       final List<String> finalKeywords = {
         ...eventKeywords,
         ...locationKeywords,
@@ -154,14 +150,11 @@ class ManagerProvider extends ChangeNotifier{
       // ------------------------------
       // 🔥 FIRESTORE SAVE
       // ------------------------------
-
       await db.collection("EVENTS").doc(eventId).set({
         "EVENT_ID": eventId,
         "EVENT_NAME": eventName,
-
         "EVENT_DATE": dateController.text.trim(),
         "EVENT_DATE_TS": Timestamp.fromDate(eventDateTime!),
-
         'WORK_ACTIVE_STATUS': 'ACTIVE',
         "MEAL_TYPE": selectedMeal,
         "LOCATION_NAME": location,
@@ -169,20 +162,14 @@ class ManagerProvider extends ChangeNotifier{
         "LONGITUDE": longitude,
         "BOYS_REQUIRED": int.parse(boysController.text),
         "DESCRIPTION": descController.text.trim(),
-
-        /// 👉 NEW FIELDS
         "CLIENT_NAME": clientNameController.text.trim(),
         "CLIENT_PHONE": clientPhoneController.text.trim(),
-
         "STATUS": publishType == PublishType.now ? "PUBLISHED" : "DRAFT",
         "EVENT_STATUS":
         publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
-
         "CREATED_TIME": FieldValue.serverTimestamp(),
-
         "SEARCH_KEYWORDS": finalKeywords,
       });
-
 
       Navigator.pop(context);
 
@@ -196,6 +183,9 @@ class ManagerProvider extends ChangeNotifier{
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Failed to create event")),
       );
+    } finally {
+      isSavingEvent = false;
+      notifyListeners();
     }
   }
 
@@ -616,6 +606,22 @@ class ManagerProvider extends ChangeNotifier{
 
   final List<PaymentReportModel> reportList = [];        // filtered list for UI
   final List<PaymentReportModel> _allReportList = [];    // full list backup
+
+  double get totalAmount {
+    double total = 0;
+    for (var item in reportList) {
+      total += item.paymentAmount;
+    }
+    return total;
+  }
+  String getAmount(double totalCollection) {
+    final formatter = NumberFormat.currency(locale: 'HI', symbol: '');
+    String newText1 = formatter.format(totalCollection);
+    String newText =
+    formatter.format(totalCollection).substring(0, newText1.length - 3);
+    return newText;
+  }
+
 
 
 

@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../Providers/boys_provider.dart';
@@ -85,15 +87,69 @@ class RegisterBoyScreen extends StatelessWidget {
                   const SizedBox(height: 15),
 
                   _label("Date of Birth"),
-                  TextFormField(
-                    controller: provider.dobController,
-                    readOnly: true,
-                    onTap: () => provider.selectDob(context),
-                    decoration: _decoration(
-                      "Select DOB",
-                      Icons.calendar_today,
+                  GestureDetector(
+                    onTap: () async {
+                      // Show Cupertino Date Picker here
+                      DateTime? pickedDate = await showCupertinoModalPopup<DateTime>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return CupertinoActionSheet(
+                            title: Text("Select DOB"),
+                            actions: <Widget>[
+                              SizedBox(
+                                height: 300, // or any fixed height you want
+                                child: CupertinoDatePicker(
+
+                                  mode: CupertinoDatePickerMode.date,
+                                  initialDateTime: DateTime(2007, 1, 1), // you can adjust this
+                                  minimumDate: DateTime(1985, 1, 1),
+                                  maximumDate:  DateTime(2007, 1, 1),
+                                  onDateTimeChanged: (DateTime newDate) {
+
+                                    provider.dateSetting(newDate);
+
+                                  },
+                                ),
+                              ),
+                              CupertinoDialogAction(
+                                child: Text("Done"),
+                                onPressed: () {
+                                  Navigator.pop(context); // Close the date picker
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0xFFF9F9F9),
+                            width: 3),
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                provider.dobController.text.isEmpty ? 'Select your DOB' : provider.dobController.text,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const Icon(Icons.calendar_today_outlined, size: 20, color: Colors.black87),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    validator: (v) => v!.isEmpty ? "Required field" : null,
                   ),
 
                   // const SizedBox(height: 15),
@@ -112,6 +168,13 @@ class RegisterBoyScreen extends StatelessWidget {
                   //   validator: (v) => v == null ? "Select blood group" : null,
                   // ),
 
+
+                  const SizedBox(height: 15),
+
+                  _label("District"),
+                  _districtDropdown(context),
+
+
                   const SizedBox(height: 15),
 
                   _label("Place"),
@@ -120,16 +183,6 @@ class RegisterBoyScreen extends StatelessWidget {
                     "Enter place",
                     Icons.location_city,
                   ),
-
-                  const SizedBox(height: 15),
-
-                  _label("District"),
-                  _textField(
-                    provider.districtController,
-                    "Enter district",
-                    Icons.map,
-                  ),
-
                   const SizedBox(height: 15),
 
                   _label("Pin Code"),
@@ -210,33 +263,56 @@ class RegisterBoyScreen extends StatelessWidget {
                       onPressed: provider.isRegisteringBoy
                           ? null
                           : () {
-                              if (!formKey.currentState!.validate()) return;
-                              provider.registerNewBoyFun(context, registeredBy);
-                            },
+                        if (!formKey.currentState!.validate()) return;
+                        provider.registerNewBoyFun(context, registeredBy);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryOrange,
                         disabledBackgroundColor: Colors.grey[400],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        elevation: 3,
                       ),
-                      child: provider.isRegisteringBoy
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, anim) =>
+                            FadeTransition(opacity: anim, child: child),
+                        child: provider.isRegisteringBoy
+                            ? Row(
+                          key: const ValueKey("loading"),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              height: 22,
+                              width: 22,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text(
-                              "Submit",
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                strokeWidth: 2.4,
+                                valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             ),
+                            SizedBox(width: 12),
+                            Text(
+                              "Processing...",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            )
+                          ],
+                        )
+                            : const Text(
+                          "Submit",
+                          key: ValueKey("submit"),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -500,6 +576,47 @@ class RegisterBoyScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _districtDropdown(BuildContext context) {
+    final districts = [
+      "Ernakulam",
+      "Alappuzha",
+      "Idukki",
+      "Kannur",
+      "Kasaragod",
+      "Kollam",
+      "Kottayam",
+      "Kozhikode",
+      "Malappuram",
+      "Palakkad",
+      "Pathanamthitta",
+      "Thiruvananthapuram",
+      "Thrissur",
+      "Wayanad",
+    ];
+
+    return Consumer<BoysProvider>(
+      builder: (contextss,provider,cho) {
+        return DropdownButtonFormField<String>(
+          value: provider.districtController.text.isEmpty
+              ? null
+              : provider.districtController.text,
+          decoration: _decoration("Select district", Icons.map),
+          items: districts.map((d) {
+            return DropdownMenuItem<String>(
+              value: d,
+              child: Text(d),
+            );
+          }).toList(),
+          onChanged: (value) {
+            provider.districtController.text = value ?? "";
+            print('${provider.districtController.text} KFNEJRERKF ');
+          },
+          validator: (v) => (v == null || v.isEmpty) ? "Required field" : null,
+        );
+      }
     );
   }
 

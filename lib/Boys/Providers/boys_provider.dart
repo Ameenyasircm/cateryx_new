@@ -9,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,7 +72,7 @@ class BoysProvider extends ChangeNotifier{
   Future<void> selectDob(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000),
+      initialDate: DateTime(2026),
       firstDate: DateTime(1970),
       lastDate: DateTime.now(),
     );
@@ -799,6 +800,26 @@ class BoysProvider extends ChangeNotifier{
   }
 
 
+  String _selectedFilter = 'All'; // ✅ Default is 'All'
+
+  String get selectedFilter => _selectedFilter;
+
+  DateTime birthDate = DateTime.now();
+  var outputDayNode = DateFormat('d/MM/yyy');
+
+  void dateSetting(DateTime birthDaten) {
+    dobController.text = outputDayNode.format(birthDaten).toString();
+    birthDate = birthDaten;
+    dobDateTime = birthDaten;
+    final now = DateTime.now();
+    int age = now.year - birthDaten.year;
+    if (now.month < birthDaten.month ||
+        (now.month == birthDaten.month && now.day < birthDaten.day)) {
+      age--; // Adjust if birthday hasn't occurred yet this year
+    }
+    print('Age is $age'); // Or store it somewhere
+    notifyListeners();
+  }
 
 
 }

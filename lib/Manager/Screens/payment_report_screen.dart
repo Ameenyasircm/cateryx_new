@@ -61,6 +61,68 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Column(
                     children: [
+                      // 🔵 Dashboard Summary
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Total Amount",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "₹ ${pro.getAmount(double.parse(pro.totalAmount.toStringAsFixed(2)))}",
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // If needed: total records
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    "Total Records",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "${pro.reportList.length}",
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       // ✅ Search
                       Visibility(visible: fromWhere!='boy',
                         child: TextFormField(
@@ -151,7 +213,7 @@ class ManagerPaymentReportScreen extends StatelessWidget {
                                 DataColumn(label: Text("Event", style: headerStyle)),
                                 DataColumn(label: Text("Amount", style: headerStyle)),
                                 DataColumn(label: Text("Location", style: headerStyle)),
-                                DataColumn(label: Text("Payment Date", style: headerStyle)),
+                                DataColumn(label: Text("Received Date", style: headerStyle)),
                                 if (fromWhere != "boy")
                                 DataColumn(label: Text("Boy Name", style: headerStyle)),
                                 if (fromWhere != "boy")

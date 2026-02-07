@@ -205,31 +205,64 @@ class CreateEventScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: provider.isSavingEvent
+                          ? null
+                          : () {
                         if (!formKey.currentState!.validate()) return;
 
                         if (isEdit) {
-                          provider.editEventFun(context, eventId!,eventDetailsProvider);
+                          provider.editEventFun(context, eventId!, eventDetailsProvider);
                         } else {
                           provider.createEventFun(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryOrange,
+                        disabledBackgroundColor: Colors.grey[400],
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        isEdit ? "Update Event" : "Create Event",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: provider.isSavingEvent
+                            ? Row(
+                          key: const ValueKey("loading"),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.3,
+                                valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              "Please wait...",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        )
+                            : Text(
+                          isEdit ? "Update Event" : "Create Event",
+                          key: const ValueKey("text"),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  )
+,
                 ],
               ),
             ),
