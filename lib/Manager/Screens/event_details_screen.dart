@@ -394,6 +394,17 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                   ),
                 ),
               ),
+              SizedBox(height: 10,),
+              Center(
+                child: Container(
+                    height: 40,width: MediaQuery.of(context).size.width*0.4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.red
+                    ),
+                    child: Center(child: Text('Cancel work'))),
+              ),
+              SizedBox(height: 20,),
             ],
           ),
         ),
