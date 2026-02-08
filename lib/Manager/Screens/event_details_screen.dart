@@ -395,15 +395,43 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                 ),
               ),
               SizedBox(height: 10,),
-              Center(
-                child: Container(
-                    height: 40,width: MediaQuery.of(context).size.width*0.4,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.red
-                    ),
-                    child: Center(child: Text('Cancel work'))),
+        Center(
+          child: GestureDetector(
+            onTap: () {
+              showCancelDialog(context);
+            },
+            child: Container(
+              height: 48,
+              width: MediaQuery.of(context).size.width * 0.45,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  colors: [Colors.redAccent, Colors.red],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
+              child: const Center(
+                child: Text(
+                  'Cancel Work',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ) ,
               SizedBox(height: 20,),
             ],
           ),
@@ -490,6 +518,103 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> showCancelDialog(BuildContext context) async {
+    final eventDetailsProvider =
+    Provider.of<EventDetailsProvider>(context, listen: false);
+    final managerProvider =
+    Provider.of<ManagerProvider>(context, listen: false);
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Text(
+            "Are you sure?",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          content: const Text(
+            "Do you really want to cancel this work?",
+            style: TextStyle(fontSize: 15),
+          ),
+          actionsPadding: const EdgeInsets.only(bottom: 10, right: 10),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "No",
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final eventDetailsProvider =
+                Provider.of<EventDetailsProvider>(context, listen: false);
+                final managerProvider =
+                Provider.of<ManagerProvider>(context, listen: false);
+
+                // 🔥 1. Check if boys are assigned
+                bool boysExist =
+                await eventDetailsProvider.hasConfirmedBoys(widget.eventID);
+
+                if (boysExist) {
+                  Navigator.pop(context); // close dialog
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("You cannot cancel! Boys already confirmed for this work."),
+                      backgroundColor: Colors.orange,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
+                // 🔥 2. Proceed with cancellation (no boys found)
+                await eventDetailsProvider.cancelEvent(widget.eventID);
+                managerProvider.cancelWorkRemoveList(widget.eventID);
+
+                // 🔥 Close the Alert Dialog
+                Navigator.pop(context);
+
+                // 🔥 Close the previous screen (2nd pop)
+                Navigator.pop(context);
+
+                // 🟢 Show success SnackBar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Work has been canceled successfully"),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                "Submit",
+                style: TextStyle(fontSize: 16),
+              ),
+            )
+,
+          ],
+        );
+      },
     );
   }
 

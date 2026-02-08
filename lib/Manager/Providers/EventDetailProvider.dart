@@ -1,5 +1,7 @@
 import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:cateryyx/Manager/Models/event_model.dart';
+import 'package:cateryyx/services/event_service.dart';
+import 'package:cateryyx/services/event_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
+import '../../models/event_freezed_model.dart';
 import '../../models/note_model.dart';
 import '../../services/note_service.dart';
 import '../Models/closed_event_model.dart';
@@ -895,6 +898,57 @@ class EventDetailsProvider extends ChangeNotifier {
     await _service.addNote(eventId: eventId, note: note);
   }
 
+  Future<bool> hasConfirmedBoys(String eventId) async {
+    try {
+      final snapshot = await db
+          .collection('EVENTS')
+          .doc(eventId)
+          .collection('CONFIRMED_BOYS')
+          .get();
+
+      return snapshot.docs.isNotEmpty; // true = boys exist
+    } catch (e) {
+      debugPrint("Check Confirmed Boys Error: $e");
+      return true; // safer to block cancellation if error happens
+    }
+  }
+
+
+  Future<void> cancelEvent(String eventId) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await db
+          .collection('EVENTS')
+          .doc(eventId)
+          .update({'STATUS': 'CANCELED','WORK_ACTIVE_STATUS':'CANCELED'});
+
+      // Remove from the current list (optional)
+      notifyListeners();
+      debugPrint("Event $eventId canceled successfully");
+    } catch (e) {
+      debugPrint("Cancel Event Error: $e");
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  final EventService _eventService = EventService();
+
+  List<EventFreezedModel> canceledList = [];
+
+  Future<void> loadCanceledWorks() async {
+    isLoading = true;
+    notifyListeners();
+
+    canceledList = await _eventService.fetchCanceledWorks();
+
+    isLoading = false;
+    notifyListeners();
+  }
 
 }
 

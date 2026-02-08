@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import '../Manager/Models/event_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/event_freezed_model.dart';
 
 
 class EventService {
@@ -196,7 +199,50 @@ class EventService {
 
 
 
+  /// Check if CONFIRMED_BOYS exist
+  Future<bool> hasConfirmedBoys(String eventId) async {
+    try {
+      final s = await _db
+          .collection('EVENTS')
+          .doc(eventId)
+          .collection('CONFIRMED_BOYS')
+          .get();
 
+      return s.docs.isNotEmpty;
+    } catch (e) {
+      debugPrint("Check Boys Error: $e");
+      return true; // block cancel if error happens
+    }
+  }
+
+  /// Cancel event
+  Future<void> cancelEvent(String eventId) async {
+    try {
+      await _db.collection('EVENTS').doc(eventId).update({
+        'STATUS': 'CANCELED',
+      });
+    } catch (e) {
+      debugPrint("cancelEvent Error: $e");
+    }
+  }
+
+  Future<List<EventFreezedModel>> fetchCanceledWorks() async {
+    try {
+      final QuerySnapshot snapshot = await _db
+          .collection('EVENTS')
+          .where('STATUS', isEqualTo: 'CANCELED')
+          // .orderBy('EVENT_DATE_TS', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => EventFreezedModel.fromJson(
+          doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print("❌ fetchCanceledWorks ERROR: $e");
+      return [];
+    }
+  }
 
 
 }

@@ -148,7 +148,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
               AppSpacing.h10,
               Align(
-                alignment: AlignmentGeometry.centerRight,
+                // alignment: AlignmentGeometry.centerRight,
                 child: TextButton(
                   onPressed: (){
                     callNext(ForgotPassword(), context);
