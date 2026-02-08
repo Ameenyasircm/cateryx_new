@@ -1,7 +1,11 @@
+import 'package:cateryyx/Constants/my_functions.dart';
+import 'package:cateryyx/Manager/Screens/forgot_password.dart';
+import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_typography.dart';
 import '../Providers/ManagerProvider.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -15,33 +19,45 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _currentPswController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
   final TextEditingController _confirmPassController = TextEditingController();
   bool _isLoading = false;
+  bool _hideCurrentPassword = true;
+  bool _hideNewPassword = true;
+  bool _hideConfirmPassword = true;
+
 
 // Inside _ChangePasswordScreenState
   Future<void> _updatePassword() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      try {
-        // Access your provider (Replace 'YourProviderName' with your actual class name)
-        ManagerProvider provider = Provider.of<ManagerProvider>(context, listen: false);
+    setState(() => _isLoading = true);
 
-        await provider.updateBoyPassword(
-            context,
-            widget.managerID,
-            _passController.text.trim(),widget.fromWhere
-        );
+    try {
+      ManagerProvider provider =
+      Provider.of<ManagerProvider>(context, listen: false);
 
+      final bool isUpdated = await provider.updateBoyPassword(
+        context,
+        widget.managerID,
+        _currentPswController.text.trim(),
+        _passController.text.trim(),
+        widget.fromWhere,
+      );
 
-        if (mounted) Navigator.pop(context);
-      } catch (e) {
-        // Error is handled in provider, stop loading here
-        setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
+
+      // ✅ Close screen ONLY on success
+      if (isUpdated && mounted) {
+        Navigator.pop(context);
       }
+    } catch (e) {
+      setState(() => _isLoading = false);
     }
   }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,9 +90,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 32),
 
               _buildPasswordField(
+                controller: _currentPswController,
+                label: "Current Password",
+                hint: "Enter current password",
+                obscureValue: _hideCurrentPassword,
+                onToggle: () {
+                  setState(() {
+                    _hideCurrentPassword = !_hideCurrentPassword;
+                  });
+                },
+              ),
+
+              const SizedBox(height: 20),
+              _buildPasswordField(
                 controller: _passController,
                 label: "New Password",
-                hint: "Enter 6 digits",
+                hint: "Enter new password",
+                obscureValue: _hideNewPassword,
+                onToggle: () {
+                  setState(() {
+                    _hideNewPassword = !_hideNewPassword;
+                  });
+                },
               ),
 
               const SizedBox(height: 20),
@@ -84,7 +119,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               _buildPasswordField(
                 controller: _confirmPassController,
                 label: "Confirm Password",
-                hint: "Re-enter 6 digits",
+                hint: "Re-enter new password",
+                obscureValue: _hideConfirmPassword,
+                onToggle: () {
+                  setState(() {
+                    _hideConfirmPassword = !_hideConfirmPassword;
+                  });
+                },
                 isConfirm: true,
               ),
 
@@ -105,6 +146,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       : const Text("Update Password", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
+              AppSpacing.h10,
+              Align(
+                alignment: AlignmentGeometry.centerRight,
+                child: TextButton(
+                  onPressed: (){
+                    callNext(ForgotPassword(), context);
+                  },
+                  child: Text('Forgot Password?',style: AppTypography.body2.copyWith(
+                      color:Colors.blue
+                  ),),
+                ),
+              ),
             ],
           ),
         ),
@@ -116,46 +169,54 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required TextEditingController controller,
     required String label,
     required String hint,
+    required bool obscureValue,
+    required VoidCallback onToggle,
     bool isConfirm = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(label,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          obscureText: true,
+          obscureText: obscureValue,
           keyboardType: TextInputType.number,
           maxLength: 6,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly], // Only numbers
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: InputDecoration(
             hintText: hint,
-            counterText: "", // Hides the 0/6 counter for a cleaner look
+            counterText: "",
             filled: true,
             fillColor: Colors.white,
-            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xff1A237E)),
+            prefixIcon: const Icon(Icons.lock_outline_rounded,
+                color: Color(0xff1A237E)),
+            suffixIcon: IconButton(
+              icon: Icon(
+                obscureValue ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey,
+              ),
+              onPressed: onToggle,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xff1A237E), width: 1.5),
             ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return "Field required";
             if (value.length != 6) return "Must be exactly 6 digits";
-            if (isConfirm && value != _passController.text) return "Passwords do not match";
+            if (isConfirm && value != _passController.text) {
+              return "Passwords do not match";
+            }
             return null;
           },
         ),
       ],
     );
   }
+
+
+
 }

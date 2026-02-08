@@ -98,6 +98,12 @@ class LoginProvider extends ChangeNotifier{
 
           String boyID = query.docs.first.id;
           String boyName = dataMap['NAME'] ?? "";
+          final String boyPhotoUrl =
+          dataMap['BOY_PHOTO_URL'] is String
+              ? dataMap['BOY_PHOTO_URL'] as String
+              : "";
+
+
 
           // 🔥 Save Local Login Data
           await prefs.setString('phone_number', phone);
@@ -105,6 +111,7 @@ class LoginProvider extends ChangeNotifier{
           await prefs.setString('boyName', boyName);
           await prefs.setString('boyID', boyID);
           await prefs.setString('boyPhone', phone);
+          await prefs.setString('boyPhotoUrl', boyPhotoUrl);
 
           // also set as admin (you already used)
           await prefs.setString('adminName', boyName);
@@ -127,7 +134,7 @@ class LoginProvider extends ChangeNotifier{
                 boyID: boyID,
                 boyName: boyName,
                 boyPhone: phone,
-                isLockBool: false,
+                isLockBool: false, boyPhoto: boyPhotoUrl,
               ),
               context,
             );

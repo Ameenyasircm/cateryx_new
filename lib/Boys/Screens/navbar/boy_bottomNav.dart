@@ -11,12 +11,14 @@ class BoyBottomNavBar extends StatefulWidget {
   final String boyName;
   final String boyID;
   final String boyPhone;
+  final String boyPhoto;
   bool isLockBool;
    BoyBottomNavBar({
     super.key,
     required this.boyName,
     required this.boyID,
     required this.boyPhone,
+    required this.boyPhoto,
     required this.isLockBool,
   });
 
@@ -95,11 +97,13 @@ class _BoyBottomNavBarState extends State<BoyBottomNavBar> {
         boyName: widget.boyName,
         boyID: widget.boyID,
         boyPhone: widget.boyPhone,
+        boyPhoto: widget.boyPhoto,
       ),
        MenuScreen(
          boyName: widget.boyName,
          boyID: widget.boyID,
          boyPhone: widget.boyPhone,
+         boyPhoto: widget.boyPhoto,
        ),
     ];
   }

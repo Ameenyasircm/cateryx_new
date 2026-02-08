@@ -586,6 +586,7 @@ class BoysProvider extends ChangeNotifier{
           String? name = prefs.getString('adminName');
           String? id = prefs.getString('adminName');
           String? phone = prefs.getString('adminName');
+          String? boyPhoto = prefs.getString('boyPhotoUrl');
 
             String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
             String button = map['BUTTON'].toString();
@@ -607,7 +608,8 @@ class BoysProvider extends ChangeNotifier{
                     useMaterial3: true,
                     primarySwatch: Colors.blue,
                   ),
-                  home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,isLockBool: true,),
+                  home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,
+                    isLockBool: true, boyPhoto:boyPhoto??'',),
                 ),
               ),
             );
@@ -633,7 +635,7 @@ class BoysProvider extends ChangeNotifier{
           String? name = prefs.getString('adminName');
           String? id = prefs.getString('adminName');
           String? phone = prefs.getString('adminName');
-
+          String? boyPhoto = prefs.getString('boyPhotoUrl');
           String address = map[Platform.isIOS ? "ADDRESS_iOS" : 'ADDRESS'].toString();
           String button = map['BUTTON'].toString();
           String text = map['TEXT'].toString();
@@ -652,7 +654,8 @@ class BoysProvider extends ChangeNotifier{
                   useMaterial3: true,
                   primarySwatch: Colors.blue,
                 ),
-                home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,isLockBool: true,),
+                home: BoyBottomNavBar(boyID: id!,boyPhone: phone!,boyName:name!,
+                  isLockBool: true, boyPhoto: boyPhoto??"",),
               ),
             ),
           );

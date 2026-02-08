@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInputFormatter, FilteringTextInputFormatter, LengthLimitingTextInputFormatter;
 import 'package:provider/provider.dart';
 import '../../Boys/Providers/boys_provider.dart';
 import '../../Boys/Screens/boy_registration.dart';
@@ -105,16 +106,20 @@ class _LoginscreenState extends State<Loginscreen> {
                   const SizedBox(height: 35),
 
                   // Phone Input
-                  _buildInputField(
+                  buildInputField(
                     controller: _phoneController,
                     hint: "Phone Number",
                     icon: Icons.phone_android,
                     type: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
                   // Password Input
-                  _buildInputField(
+                  buildInputField(
                     controller: _passwordController,
                     hint: "Password",
                     icon: Icons.lock_outline,
@@ -200,37 +205,40 @@ class _LoginscreenState extends State<Loginscreen> {
   }
 
   // Reusable TextField Widget
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    TextInputType type = TextInputType.text,
-    bool isPassword = false,
-    bool isSecure = false,
-    VoidCallback? toggleVisibility,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(15),
+
+}
+Widget buildInputField({
+  required TextEditingController controller,
+  required String hint,
+  required IconData icon,
+  TextInputType type = TextInputType.text,
+  final List<TextInputFormatter>? inputFormatters,
+  bool isPassword = false,
+  bool isSecure = false,
+  VoidCallback? toggleVisibility,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.grey[100],
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: TextField(
+      controller: controller,
+      keyboardType: type,
+      obscureText: isSecure,
+      inputFormatters: inputFormatters,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: const Color(0xFF1A237E)),
+        suffixIcon: isPassword
+            ? IconButton(
+          icon: Icon(isSecure ? Icons.visibility_off : Icons.visibility),
+          onPressed: toggleVisibility,
+        )
+            : null,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
       ),
-      child: TextField(
-        controller: controller,
-        keyboardType: type,
-        obscureText: isSecure,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: const Color(0xFF1A237E)),
-          suffixIcon: isPassword
-              ? IconButton(
-            icon: Icon(isSecure ? Icons.visibility_off : Icons.visibility),
-            onPressed: toggleVisibility,
-          )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }

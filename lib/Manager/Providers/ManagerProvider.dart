@@ -428,21 +428,47 @@ class ManagerProvider extends ChangeNotifier{
 
 
 
-  Future<void> updateBoyPassword(BuildContext context, String docId, String newPassword,String fromWhere) async {
+  Future<bool> updateBoyPassword(
+      BuildContext context,
+      String docId,
+      String currentPsw,
+      String newPassword,
+      String fromWhere,
+      ) async {
     try {
-      String dbName='';
-      if(fromWhere=="boy"){
-        dbName="BOYS";
-      }else{
-        dbName="ADMINS";
+      String dbName = fromWhere == "boy" ? "BOYS" : "ADMINS";
+
+      final docRef = db.collection(dbName).doc(docId);
+      final docSnap = await docRef.get();
+
+      if (!docSnap.exists) {
+        throw Exception("User not found");
       }
 
-      await db.collection(dbName).doc(docId).set({
-        "PASSWORD": newPassword, // Stored as a string
-        "PASSWORD_UPDATED_TIME": FieldValue.serverTimestamp()
-      },SetOptions(merge: true));
+      final dbPassword = docSnap.get("PASSWORD");
+
+      // ❌ Wrong current password
+      if (dbPassword != currentPsw) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Current password is incorrect"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return false; // ⛔ IMPORTANT
+      }
+
+      // ✅ Update password
+      await docRef.set({
+        "PASSWORD": newPassword,
+        "PASSWORD_UPDATED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('password', newPassword);
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -451,16 +477,14 @@ class ManagerProvider extends ChangeNotifier{
           ),
         );
       }
+
+      return true; // ✅ SUCCESS
     } catch (e) {
       debugPrint("Update Password Error: $e");
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update password. Please try again.")),
-        );
-      }
-      rethrow; // Pass error back to the UI to stop loading state
+      rethrow;
     }
   }
+
 
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();

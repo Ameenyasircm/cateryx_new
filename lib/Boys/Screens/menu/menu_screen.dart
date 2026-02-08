@@ -15,8 +15,8 @@ import 'widgets/menu_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MenuScreen extends StatelessWidget {
-  final String boyName,boyID,boyPhone;
-   const MenuScreen({super.key,required this.boyName,required this.boyID,required this.boyPhone});
+  final String boyName,boyID,boyPhone,boyPhoto;
+   const MenuScreen({super.key,required this.boyName,required this.boyID,required this.boyPhone,required this.boyPhoto});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class MenuScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          MenuHeader(boyName: boyName, boyID:boyID, boyPhone: boyPhone,),
+          MenuHeader(boyName: boyName, boyID:boyID, boyPhone: boyPhone, boyPhoto: boyPhoto,),
           AppSpacing.h12,
           // MenuTile(
           //   icon: Icons.person_outline,

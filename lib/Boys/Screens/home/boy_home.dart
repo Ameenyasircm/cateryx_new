@@ -8,13 +8,14 @@ import '../../Providers/boys_provider.dart';
 import 'widgets/work_tabs.dart';
 
 class BoyHome extends StatelessWidget {
-  final String boyName, boyID, boyPhone;
+  final String boyName, boyID, boyPhone,boyPhoto;
 
   const BoyHome({
     super.key,
     required this.boyName,
     required this.boyID,
     required this.boyPhone,
+    required this.boyPhoto,
   });
 
   @override
@@ -30,7 +31,7 @@ class BoyHome extends StatelessWidget {
               ProfileHeader(
                   boyID: boyID,
                   boyName: boyName,
-                  boyPhone: boyPhone),
+                  boyPhone: boyPhone,boyPhoto: boyPhoto,),
               const WorkTabs(),
               Expanded(
                 child: TabBarView(
