@@ -486,6 +486,42 @@ class ManagerProvider extends ChangeNotifier{
   }
 
 
+  Future<bool> createNewPassword(
+      BuildContext context,
+      String docId,
+      String currentPsw,
+      String newPassword,
+      String fromWhere,
+      ) async {
+    try {
+      String dbName = fromWhere == "boy" ? "BOYS" : "ADMINS";
+      final docRef = db.collection(dbName).doc(docId);
+
+      // ✅ Update password
+      await docRef.set({
+        "PASSWORD": newPassword,
+        "PASSWORD_UPDATED_TIME": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('password', newPassword);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Center(child: Text("Password updated successfully!")),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      return true; // ✅ SUCCESS
+    } catch (e) {
+      debugPrint("Update Password Error: $e");
+      rethrow;
+    }
+  }
+
   Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

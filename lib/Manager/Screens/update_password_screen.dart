@@ -89,7 +89,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
               const SizedBox(height: 32),
 
-              _buildPasswordField(
+              buildPasswordField(
                 controller: _currentPswController,
                 label: "Current Password",
                 hint: "Enter current password",
@@ -99,10 +99,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     _hideCurrentPassword = !_hideCurrentPassword;
                   });
                 },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return "Field required";
+                    return null;
+                  }
               ),
 
               const SizedBox(height: 20),
-              _buildPasswordField(
+              buildPasswordField(
                 controller: _passController,
                 label: "New Password",
                 hint: "Enter new password",
@@ -112,11 +116,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     _hideNewPassword = !_hideNewPassword;
                   });
                 },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return "Field required";
+                    if (value.length != 6) return "Must be exactly 6 digits";
+                    return null;
+                  }
               ),
 
               const SizedBox(height: 20),
 
-              _buildPasswordField(
+              buildPasswordField(
                 controller: _confirmPassController,
                 label: "Confirm Password",
                 hint: "Re-enter new password",
@@ -127,6 +136,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   });
                 },
                 isConfirm: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return "Field required";
+                    if (value.length != 6) return "Must be exactly 6 digits";
+                    if (true && value != _passController.text) {
+                      return "Passwords do not match";
+                    }
+                    return null;
+                  }
               ),
 
               const SizedBox(height: 40),
@@ -151,7 +168,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 alignment: AlignmentGeometry.centerRight,
                 child: TextButton(
                   onPressed: (){
-                    callNext(ForgotPassword(), context);
+                    callNext(ForgotPassword(managerID: widget.managerID, fromWhere: widget.fromWhere,), context);
                   },
                   child: Text('Forgot Password?',style: AppTypography.body2.copyWith(
                       color:Colors.blue
@@ -164,59 +181,49 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       ),
     );
   }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required bool obscureValue,
-    required VoidCallback onToggle,
-    bool isConfirm = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureValue,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            hintText: hint,
-            counterText: "",
-            filled: true,
-            fillColor: Colors.white,
-            prefixIcon: const Icon(Icons.lock_outline_rounded,
-                color: Color(0xff1A237E)),
-            suffixIcon: IconButton(
-              icon: Icon(
-                obscureValue ? Icons.visibility_off : Icons.visibility,
-                color: Colors.grey,
-              ),
-              onPressed: onToggle,
+}
+Widget buildPasswordField({
+  required TextEditingController controller,
+  required String label,
+  required String hint,
+  required bool obscureValue,
+  required VoidCallback onToggle,
+  required String? Function(String?) validator,
+  bool isConfirm = false,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        obscureText: obscureValue,
+        keyboardType: TextInputType.number,
+        maxLength: 6,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          hintText: hint,
+          counterText: "",
+          filled: true,
+          fillColor: Colors.white,
+          prefixIcon: const Icon(Icons.lock_outline_rounded,
+              color: Color(0xff1A237E)),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscureValue ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
+            onPressed: onToggle,
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) return "Field required";
-            if (value.length != 6) return "Must be exactly 6 digits";
-            if (isConfirm && value != _passController.text) {
-              return "Passwords do not match";
-            }
-            return null;
-          },
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
         ),
-      ],
-    );
-  }
-
-
-
+        validator: validator,
+      ),
+    ],
+  );
 }
