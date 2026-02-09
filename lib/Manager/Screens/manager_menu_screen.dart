@@ -9,6 +9,7 @@ import '../../Constants/my_functions.dart';
 import '../Providers/ManagerProvider.dart';
 import 'about_screen.dart';
 import 'boys_requests.dart';
+import 'canceled_works.dart';
 import 'closed_events_screen.dart';
 
 class ManagerMenuScreen extends StatelessWidget {
@@ -119,6 +120,14 @@ class ManagerMenuScreen extends StatelessWidget {
                   onTap: () {
                     context.read<EventDetailsProvider>().fetchClosedEvents();
                     callNext(ClosedEventsScreen(fromWhere: 'manager', boyId: '',), context);
+                  },
+                ),_menuTile(
+                  icon: Icons.task_alt_rounded,
+                  title: "Canceled Works",
+                  subtitle: "works canceled",
+                  onTap: () {
+                    context.read<EventDetailsProvider>().loadCanceledWorks();
+                    callNext(CanceledWorksScreen(), context);
                   },
                 ),
                 _menuTile(

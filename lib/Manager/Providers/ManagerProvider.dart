@@ -829,5 +829,9 @@ class ManagerProvider extends ChangeNotifier{
     return DateFormat('dd MMM yy hh:mm a').format(inputDate);
   }
 
+  void cancelWorkRemoveList(String eventId){
+    upcomingEventsList.removeWhere((event) => event.eventId == eventId);
+    notifyListeners();
+  }
 }
 
