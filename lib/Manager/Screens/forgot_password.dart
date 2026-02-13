@@ -114,6 +114,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                           provider.createNewPassword(context,widget.managerID,_passController.text.trim(),_confirmPassController.text.trim(),widget.fromWhere);
                           setState(() => _isLoading = false);
                           finish(context);
+
                         }
 
                       },
