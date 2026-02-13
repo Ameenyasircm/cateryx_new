@@ -1,6 +1,4 @@
 import 'package:cateryyx/Constants/my_functions.dart';
-import 'package:cateryyx/Manager/Models/event_model.dart';
-import 'package:cateryyx/services/event_service.dart';
 import 'package:cateryyx/services/event_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,10 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../Boys/Models/ConfirmedBoyModel.dart';
-import '../../models/event_freezed_model.dart';
 import '../../models/note_model.dart';
 import '../../services/note_service.dart';
 import '../Models/closed_event_model.dart';
+import '../Models/event_model.dart';
 import '../Models/payment_report_model.dart';
 
 class EventDetailsProvider extends ChangeNotifier {
@@ -938,7 +936,7 @@ class EventDetailsProvider extends ChangeNotifier {
 
   final EventService _eventService = EventService();
 
-  List<EventFreezedModel> canceledList = [];
+  List<EventModel> canceledList = [];
 
   Future<void> loadCanceledWorks() async {
     isLoading = true;

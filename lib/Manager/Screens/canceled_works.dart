@@ -2,7 +2,7 @@ import 'package:cateryyx/Manager/Providers/EventDetailProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/event_freezed_model.dart';
+import '../Models/event_model.dart';
 
 
 class CanceledWorksScreen extends StatelessWidget {
@@ -31,7 +31,7 @@ class CanceledWorksScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         itemCount: provider.canceledList.length,
         itemBuilder: (context, index) {
-          EventFreezedModel event = provider.canceledList[index];
+          EventModel event = provider.canceledList[index];
 
           return Card(
             elevation: 2,

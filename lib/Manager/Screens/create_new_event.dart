@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../Constants/appConfig.dart';
+import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Providers/EventDetailProvider.dart';
 import '../Providers/ManagerProvider.dart';
 import 'map_pick_screen.dart';
@@ -210,9 +211,13 @@ class CreateEventScreen extends StatelessWidget {
                           : () {
                         if (!formKey.currentState!.validate()) return;
 
+
                         if (isEdit) {
                           provider.editEventFun(context, eventId!, eventDetailsProvider);
                         } else {
+                          if(provider.publishType==PublishType.idle){
+                            NotificationSnack.showError("Please select publish type");
+                          }
                           provider.createEventFun(context);
                         }
                       },

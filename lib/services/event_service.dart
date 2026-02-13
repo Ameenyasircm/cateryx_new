@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../Manager/Models/event_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/event_freezed_model.dart';
+import '../models/event_freezed_model.dart' hide EventModel;
 
 
 class EventService {
@@ -226,7 +226,7 @@ class EventService {
     }
   }
 
-  Future<List<EventFreezedModel>> fetchCanceledWorks() async {
+  Future<List<EventModel>> fetchCanceledWorks() async {
     try {
       final QuerySnapshot snapshot = await _db
           .collection('EVENTS')
@@ -235,7 +235,7 @@ class EventService {
           .get();
 
       return snapshot.docs
-          .map((doc) => EventFreezedModel.fromJson(
+          .map((doc) => EventModel.fromMap(
           doc.data() as Map<String, dynamic>))
           .toList();
     } catch (e) {

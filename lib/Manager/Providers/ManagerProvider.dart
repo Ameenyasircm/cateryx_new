@@ -82,6 +82,7 @@ class ManagerProvider extends ChangeNotifier{
     boysController.clear();
     clientNameController.clear();
     clientPhoneController.clear();
+    publishType = PublishType.idle;
     notifyListeners();
   }
 

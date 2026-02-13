@@ -1,43 +1,85 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../Constants/time_stamp.dart';
+class EventModel {
+  String eventId;
+  String eventName;
+  String eventDate;
+  Timestamp? eventDateTs;
+  String mealType;
+  String locationName;
+  double latitude;
+  double longitude;
+  int boysRequired;
+  int boysTaken;
+  String description;
+  String eventStatus;
+  String status;
+  String onOffStatus;
+  Timestamp? createdTime;
+  String clientName;
+  String clientPhone;
 
-part 'event_freezed_model.freezed.dart';
-part 'event_freezed_model.g.dart';
+  EventModel({
+    this.eventId = '',
+    this.eventName = '',
+    this.eventDate = '',
+    this.eventDateTs,
+    this.mealType = '',
+    this.locationName = '',
+    this.latitude = 0.0,
+    this.longitude = 0.0,
+    this.boysRequired = 0,
+    this.boysTaken = 0,
+    this.description = '',
+    this.eventStatus = '',
+    this.status = '',
+    this.onOffStatus = '',
+    this.createdTime,
+    this.clientName = '',
+    this.clientPhone = '',
+  });
 
-@freezed
-class EventFreezedModel with _$EventFreezedModel {
-  const factory EventFreezedModel({
-    @JsonKey(name: 'EVENT_ID') @Default('') String eventId,
-    @JsonKey(name: 'EVENT_NAME') @Default('') String eventName,
-    @JsonKey(name: 'EVENT_DATE') @Default('') String eventDate,
+  factory EventModel.fromJson(Map<String, dynamic> json) {
+    return EventModel(
+      eventId: json['EVENT_ID'] ?? '',
+      eventName: json['EVENT_NAME'] ?? '',
+      eventDate: json['EVENT_DATE'] ?? '',
+      eventDateTs: json['EVENT_DATE_TS'] as Timestamp?,
+      mealType: json['MEAL_TYPE'] ?? '',
+      locationName: json['LOCATION_NAME'] ?? '',
+      latitude: (json['LATITUDE'] ?? 0.0).toDouble(),
+      longitude: (json['LONGITUDE'] ?? 0.0).toDouble(),
+      boysRequired: json['BOYS_REQUIRED'] ?? 0,
+      boysTaken: json['BOYS_TAKEN'] ?? 0,
+      description: json['DESCRIPTION'] ?? '',
+      eventStatus: json['EVENT_STATUS'] ?? '',
+      status: json['STATUS'] ?? '',
+      onOffStatus: json['WORK_ACTIVE_STATUS'] ?? '',
+      createdTime: json['CREATED_TIME'] as Timestamp?,
+      clientName: json['CLIENT_NAME'] ?? '',
+      clientPhone: json['CLIENT_PHONE'] ?? '',
+    );
+  }
 
-    /// FIXED: Add Timestamp converter
-    @TimestampConverter()
-    @JsonKey(name: 'EVENT_DATE_TS')
-    Timestamp? eventDateTs,
-
-    @JsonKey(name: 'MEAL_TYPE') @Default('') String mealType,
-    @JsonKey(name: 'LOCATION_NAME') @Default('') String locationName,
-    @JsonKey(name: 'LATITUDE') @Default(0.0) double latitude,
-    @JsonKey(name: 'LONGITUDE') @Default(0.0) double longitude,
-    @JsonKey(name: 'BOYS_REQUIRED') @Default(0) int boysRequired,
-    @JsonKey(name: 'BOYS_TAKEN') @Default(0) int boysTaken,
-    @JsonKey(name: 'DESCRIPTION') @Default('') String description,
-    @JsonKey(name: 'EVENT_STATUS') @Default('') String eventStatus,
-    @JsonKey(name: 'STATUS') @Default('') String status,
-    @JsonKey(name: 'WORK_ACTIVE_STATUS') @Default('') String onOffStatus,
-
-    /// FIXED: Timestamp converter for optional timestamp
-    @TimestampConverter()
-    @JsonKey(name: 'CREATED_TIME')
-    Timestamp? createdTime,
-
-    @JsonKey(name: 'CLIENT_NAME') @Default('') String clientName,
-    @JsonKey(name: 'CLIENT_PHONE') @Default('') String clientPhone,
-  }) = _EventFreezedModel;
-
-  factory EventFreezedModel.fromJson(Map<String, dynamic> json) =>
-      _$EventFreezedModelFromJson(json);
+  Map<String, dynamic> toJson() {
+    return {
+      'EVENT_ID': eventId,
+      'EVENT_NAME': eventName,
+      'EVENT_DATE': eventDate,
+      'EVENT_DATE_TS': eventDateTs,
+      'MEAL_TYPE': mealType,
+      'LOCATION_NAME': locationName,
+      'LATITUDE': latitude,
+      'LONGITUDE': longitude,
+      'BOYS_REQUIRED': boysRequired,
+      'BOYS_TAKEN': boysTaken,
+      'DESCRIPTION': description,
+      'EVENT_STATUS': eventStatus,
+      'STATUS': status,
+      'WORK_ACTIVE_STATUS': onOffStatus,
+      'CREATED_TIME': createdTime,
+      'CLIENT_NAME': clientName,
+      'CLIENT_PHONE': clientPhone,
+    };
+  }
 }

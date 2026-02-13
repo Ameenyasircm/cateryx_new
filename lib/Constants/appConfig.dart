@@ -8,4 +8,4 @@ class AppConfig {
 }
 
 
-enum PublishType { now, later }
+enum PublishType { idle,now, later }
