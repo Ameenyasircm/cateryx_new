@@ -218,7 +218,7 @@ class CreateEventScreen extends StatelessWidget {
                           if(provider.publishType==PublishType.idle){
                             NotificationSnack.showError("Please select publish type");
                           }
-                          provider.createEventFun(context);
+                          // provider.createEventFun(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
