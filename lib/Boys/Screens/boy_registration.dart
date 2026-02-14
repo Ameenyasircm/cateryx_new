@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Providers/boys_provider.dart';
 
 class RegisterBoyScreen extends StatelessWidget {
@@ -13,13 +14,13 @@ class RegisterBoyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('$registeredBy KRFRKJFNRKF ');
     const primaryBlue = Color(0xff1A237E);
     const primaryOrange = Color(0xffE65100);
 
     return Consumer<BoysProvider>(
       builder: (context, provider, _) {
         return Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -264,7 +265,13 @@ class RegisterBoyScreen extends StatelessWidget {
                           ? null
                           : () {
                         if (!formKey.currentState!.validate()) return;
+                        final error = provider.validateRegistration();
+                        if (error != null) {
+                          NotificationSnack.showError(error);
+                          return;
+                        }
                         provider.registerNewBoyFun(context, registeredBy);
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryOrange,
@@ -492,7 +499,7 @@ class RegisterBoyScreen extends StatelessWidget {
                           size: 30,
                           color: Colors.grey[400],
                         ),
-                        const SizedBox(height: 8),
+
                         Text(
                           "Add Photo",
                           style: TextStyle(
@@ -510,8 +517,8 @@ class RegisterBoyScreen extends StatelessWidget {
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    width: 33,
-                    height: 33,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: const Color(0xff1A237E),
                       shape: BoxShape.circle,

@@ -9,6 +9,7 @@ import '../../Constants/my_functions.dart';
 import '../Providers/ManagerProvider.dart';
 import 'about_screen.dart';
 import 'boys_requests.dart';
+import 'boys_status_screen.dart';
 import 'canceled_works.dart';
 import 'closed_events_screen.dart';
 
@@ -111,6 +112,14 @@ class ManagerMenuScreen extends StatelessWidget {
                   onTap: () {
                     managerProvider.fetchPendingBoysRequests();
                     callNext(BoysRequestScreen(), context);
+                  },
+                ),
+                _menuTile(
+                  icon: Icons.people_rounded,
+                  title: "Boys Status",
+                  subtitle: "Approved & rejected boys",
+                  onTap: () {
+                    callNext(const BoysStatusScreen(), context);
                   },
                 ),
                 _menuTile(

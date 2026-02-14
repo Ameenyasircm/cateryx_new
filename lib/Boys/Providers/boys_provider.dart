@@ -373,6 +373,7 @@ class BoysProvider extends ChangeNotifier{
         String? adminID = prefs.getString('adminID');
 
         map.addAll({
+          "BLOCK_STATUS": "ACTIVE",
           "STATUS": "APPROVED",
           "DIRECT_APPROVAL_STATUS": "YES",
           "APPROVED_BY": adminName,
@@ -381,6 +382,7 @@ class BoysProvider extends ChangeNotifier{
         });
       } else {
         map.addAll({
+          "BLOCK_STATUS": "ACTIVE",
           "STATUS": "PENDING",
           "DIRECT_APPROVAL_STATUS": "NO",
         });
@@ -419,12 +421,21 @@ class BoysProvider extends ChangeNotifier{
       notifyListeners();
     }
   }
+  String? validateRegistration() {
+    if (boyPhoto == null) return "Please upload boy photo";
+    if (aadhaarPhoto == null) return "Please upload aadhaar photo";
+    return null;
+  }
+
 
   List<Map<String, dynamic>> boysList = [];
   List<Map<String, dynamic>> filterBoysList = [];
   List<Map<String, dynamic>> initialBoysList = []; // first 50
 
   bool isLoadingBoys = false;
+  List<Map<String, dynamic>> approvedBoysList = [];
+  List<Map<String, dynamic>> rejectedBoysList = [];
+  bool isLoadingBoysByStatus = false;
   Future<void> fetchBoys() async {
     try {
       isLoadingBoys = true;
@@ -445,6 +456,31 @@ class BoysProvider extends ChangeNotifier{
       debugPrint("Fetch Error: $e");
     } finally {
       isLoadingBoys = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchBoysByStatus() async {
+    try {
+      isLoadingBoysByStatus = true;
+      notifyListeners();
+
+      // Fetch all boys
+      final snapshot = await db
+          .collection("BOYS")
+          .orderBy("CREATED_TIME", descending: true)
+          .get();
+
+      final allBoys = snapshot.docs.map((e) => e.data() as Map<String, dynamic>).toList();
+
+      // Filter by status
+      approvedBoysList = allBoys.where((boy) => boy['STATUS'] == 'APPROVED').toList();
+      rejectedBoysList = allBoys.where((boy) => boy['STATUS'] == 'REJECTED').toList();
+
+    } catch (e) {
+      debugPrint("Fetch Boys By Status Error: $e");
+    } finally {
+      isLoadingBoysByStatus = false;
       notifyListeners();
     }
   }

@@ -539,6 +539,38 @@ class ManagerProvider extends ChangeNotifier{
 
   List<BoyRequestModel> pendingBoysList = [];
 
+  // Boys Status Lists
+  List<Map<String, dynamic>> approvedBoysList = [];
+  List<Map<String, dynamic>> rejectedBoysList = [];
+  bool isLoadingBoysByStatus = false;
+
+  Future<void> fetchBoysByStatus() async {
+    try {
+      approvedBoysList = [];
+      rejectedBoysList = [];
+      isLoadingBoysByStatus = true;
+      notifyListeners();
+
+      // Fetch all boys
+      final snapshot = await db
+          .collection("BOYS")
+          .orderBy("CREATED_TIME", descending: true)
+          .get();
+
+      final allBoys = snapshot.docs.map((e) => e.data()).toList();
+
+      // Filter by status
+      approvedBoysList = allBoys.where((boy) => boy['STATUS'] == 'APPROVED').toList();
+      rejectedBoysList = allBoys.where((boy) => boy['STATUS'] == 'REJECTED').toList();
+
+    } catch (e) {
+      debugPrint("Fetch Boys By Status Error: $e");
+    } finally {
+      isLoadingBoysByStatus = false;
+      notifyListeners();
+    }
+  }
+
   /// 🔹 FETCH PENDING BOYS
   Future<void> fetchPendingBoysRequests() async {
     pendingBoysList.clear();

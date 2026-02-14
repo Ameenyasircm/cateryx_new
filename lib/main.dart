@@ -13,6 +13,7 @@ import 'Manager/Providers/ManagerProvider.dart';
 import 'Manager/Screens/event_details_screen.dart';
 import 'Manager/Screens/sample.dart';
 import 'Manager/Screens/splashScreen.dart';
+import 'core/utils/snackBarNotifications/snackBar_notifications.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
@@ -114,8 +115,6 @@ class ErrorScreen extends StatelessWidget {
   }
 }
 
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-GlobalKey<ScaffoldMessengerState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -135,7 +134,7 @@ class MyApp extends StatelessWidget {
           ],
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            scaffoldMessengerKey: scaffoldMessengerKey,
+            scaffoldMessengerKey:NotificationSnack.scaffoldMessengerKey,
             title: 'Evento',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

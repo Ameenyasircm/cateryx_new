@@ -4,7 +4,15 @@ import '../../../main.dart';
 import '../../theme/app_typography.dart';
 
 class NotificationSnack {
+  NotificationSnack._();
+
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   static void _showSnackBar(String message, Color color) {
+    final messenger = scaffoldMessengerKey.currentState;
+
+    if (messenger == null) return;
+
     final snackBar = SnackBar(
       content: Text(
         message,
@@ -20,16 +28,15 @@ class NotificationSnack {
         bottom: 16.h,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       duration: const Duration(seconds: 2),
     );
 
-    // scaffoldMessengerKey.currentState
-    //   ?..clearSnackBars()
-    //   ..showSnackBar(snackBar);
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(snackBar);
   }
-
   // ✅ SUCCESS
   static void showSuccess(String message) {
     _showSnackBar(message, Colors.green);

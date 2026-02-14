@@ -28,6 +28,7 @@ class CreateEventScreen extends StatelessWidget {
     return Consumer<ManagerProvider>(
       builder: (context, provider, _) {
         return Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -217,8 +218,10 @@ class CreateEventScreen extends StatelessWidget {
                         } else {
                           if(provider.publishType==PublishType.idle){
                             NotificationSnack.showError("Please select publish type");
+                          }else{
+                            provider.createEventFun(context);
                           }
-                          // provider.createEventFun(context);
+
                         }
                       },
                       style: ElevatedButton.styleFrom(
