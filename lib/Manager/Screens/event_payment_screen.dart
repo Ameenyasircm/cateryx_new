@@ -68,87 +68,199 @@ class EventPaymentScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    // Avatar
-                    const CircleAvatar(
-                      radius: 26,
-                      child: Icon(Icons.person, size: 28),
-                    ),
-                    const SizedBox(width: 12),
+                    /// 🔹 Top Row (Avatar + Info + Actions)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
 
-                    // Name + phone
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            boy.boyName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                        const CircleAvatar(
+                          radius: 26,
+                          child: Icon(Icons.person, size: 28),
+                        ),
+                        const SizedBox(width: 12),
+
+                        /// 🔹 Name + Phone + Wage
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                boy.boyName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "${boy.boyPhone} • Present",
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.grey),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Wage: ₹${boy.wage}",
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        /// CALL
+                        IconButton(
+                          onPressed: () => _callNumber(boy.boyPhone),
+                          icon: const Icon(Icons.call, color: Colors.green),
+                        ),
+
+                        /// WHATSAPP
+                        IconButton(
+                          onPressed: () => _openWhatsApp(boy.boyPhone),
+                          icon: Image.asset(
+                            'assets/whsp.png',
+                            color: Colors.teal,
+                            scale: 8,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    /// 🔹 PAYMENT DETAILS SECTION
+                    if (boy.paymentAmount > 0)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+
+                            /// Paid
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("Paid Amount"),
+                                Text(
+                                  "₹${boy.paymentAmount}",
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${boy.boyPhone} • Present",
-                            style: const TextStyle(fontSize: 14, color: Colors.grey),
-                          ),const SizedBox(height: 4),
-                          Text(
-                            "Wage : ${boy.wage}",
-                            style: const TextStyle(fontSize: 14, color: Colors.grey),
-                          ),
-                        ],
+
+                            /// Extra
+                            if (boy.extraAmount > 0) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text("Extra Amount"),
+                                  Text(
+                                    "₹${boy.extraAmount}",
+                                    style: const TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            /// Remark
+                            if (boy.remark.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Remark: "),
+                                  Expanded(
+                                    child: Text(
+                                      boy.remark,
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            const SizedBox(height: 6),
+
+                            /// Balance
+                           if((boy.paymentAmount - boy.wage)>0)
+                            Row(
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("Extra"),
+                                Text(
+                                  "₹${(boy.paymentAmount - boy.wage).toStringAsFixed(0)}",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // CALL
-                    IconButton(
-                      onPressed: () => _callNumber(boy.boyPhone),
-                      icon: const Icon(Icons.call, color: Colors.green),
-                    ),
+                    const SizedBox(height: 10),
 
-                    // WHATSAPP
-                    IconButton(
-                      onPressed: () => _openWhatsApp(boy.boyPhone),
-                      icon: Image.asset(
-                        'assets/whsp.png',
-                        color: Colors.teal,
-                        scale: 8,
-                      ),
-                    ),
+                    /// 🔹 Payment Button
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          showAddPaymentDialog(
+                            context: context,
+                            boyName: boy.boyName,
+                            wage: boy.wage,
+                            onSave: (amount, extraAmount, remark) async {
+                              await provider.saveBoyPayment(
+                                eventId: eventId,
+                                boyId: boy.boyId,
+                                amount: amount,
+                                extraAmount: extraAmount,
+                                remark: remark,
+                                wage: boy.wage,
+                              );
 
-                    // PAYMENT BUTTON
-                    TextButton(
-                      onPressed: () {
-                        showAddPaymentDialog(
-                          context: context,
-                          boyName: boy.boyName,
-                          onSave: (amount) async {
-                            await provider.saveBoyPayment(
-                              eventId: eventId,
-                              boyId: boy.boyId,
-                              amount: amount,
-                            );
+                              final total = amount + extraAmount;
 
-                            showSuccessAlert(
-                              context: context,
-                              title: "Saved",
-                              message: "₹$amount added for ${boy.boyName}",
-                            );
-                          },
-                        );
-                      },
-                      child: Text(
-                        boy.paymentAmount > 0
-                            ? "₹${boy.paymentAmount}"
-                            : "Add Payment",
-                        style: TextStyle(
-                          color: boy.paymentAmount > 0 ? Colors.green : Colors.blue,
-                          fontWeight: FontWeight.w600,
+                              showSuccessAlert(
+                                context: context,
+                                title: "Saved",
+                                message:
+                                "₹$total saved for ${boy.boyName}\nExtra: ₹$extraAmount",
+                              );
+                            },
+                          );
+                        },
+                        child: Text(
+                          boy.paymentAmount > 0
+                              ? "Edit Payment"
+                              : "Add Payment",
+                          style: TextStyle(
+                            color: boy.paymentAmount > 0
+                                ? Colors.green
+                                : Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

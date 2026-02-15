@@ -95,9 +95,14 @@ Future<void> showAttendanceChoiceDialog({
 Future<void> showAddPaymentDialog({
   required BuildContext context,
   required String boyName,
-  required Function(double amount) onSave,
+  required double wage,
+  required Function(double amount, double extraAmount, String remark) onSave,
 }) {
-  final TextEditingController controller = TextEditingController();
+  final TextEditingController amountController =
+  TextEditingController(text: wage.toStringAsFixed(0)); // 🔥 AUTO FILL
+
+  final TextEditingController extraController = TextEditingController();
+  final TextEditingController remarkController = TextEditingController();
 
   return showDialog(
     context: context,
@@ -106,29 +111,74 @@ Future<void> showAddPaymentDialog({
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Add Payment'),
+            const Text('Add Payment'),
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => Navigator.pop(context),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(boyName,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 10),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.currency_rupee),
-                hintText: 'Enter amount',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                boyName,
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+
+              /// 🔹 Wage Display
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Wage: ₹$wage",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              /// 🔹 Payment Amount (AUTO FILLED)
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: "Payment Amount",
+                  prefixIcon: Icon(Icons.currency_rupee),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              /// 🔹 Extra Amount
+              TextField(
+                controller: extraController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: "Extra Amount (Optional)",
+                  prefixIcon: Icon(Icons.add),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              /// 🔹 Remark
+              TextField(
+                controller: remarkController,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: "Remark (Optional)",
+                  prefixIcon: Icon(Icons.note),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -138,11 +188,17 @@ Future<void> showAddPaymentDialog({
           ElevatedButton(
             onPressed: () {
               final amount =
-                  double.tryParse(controller.text.trim()) ?? 0;
+                  double.tryParse(amountController.text.trim()) ?? 0;
+
+              final extra =
+                  double.tryParse(extraController.text.trim()) ?? 0;
+
+              final remark = remarkController.text.trim();
+
               if (amount <= 0) return;
 
               Navigator.pop(context);
-              onSave(amount);
+              onSave(amount, extra, remark);
             },
             child: const Text('Save'),
           ),
@@ -151,4 +207,5 @@ Future<void> showAddPaymentDialog({
     },
   );
 }
+
 

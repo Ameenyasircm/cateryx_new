@@ -168,123 +168,127 @@ class EventDetailsProvider extends ChangeNotifier {
 
 ///  commented by yasar
 
-  // Future<void> saveBoyPayment({
-  //   required String eventId,
-  //   required String boyId,
-  //   required double amount,
-  // }) async {
-  //   await db
-  //       .collection('EVENTS')
-  //       .doc(eventId)
-  //       .collection('CONFIRMED_BOYS')
-  //       .doc(boyId)
-  //       .update({
-  //     'PAYMENT_AMOUNT': amount,
-  //     'PAYMENT_UPDATED_AT': Timestamp.now(),
-  //   });
-  //
-  //   await db
-  //       .collection('BOYS')
-  //       .doc(boyId)
-  //       .collection('CONFIRMED_WORKS')
-  //       .doc(eventId)
-  //       .update({
-  //     'PAYMENT_AMOUNT': amount,
-  //     'PAYMENT_UPDATED_AT': Timestamp.now(),
-  //   });
-  //
-  //   final index =
-  //   confirmedBoysList.indexWhere((e) => e.boyId == boyId);
-  //
-  //   confirmedBoysList[index] =
-  //       confirmedBoysList[index].copyWith(paymentAmount: amount);
-  //
-  //   notifyListeners();
-  // }
 
   Future<void> saveBoyPayment({
     required String eventId,
     required String boyId,
     required double amount,
+    required double extraAmount,
+    required String remark,
+    required double wage,
   }) async {
-    final now = Timestamp.now();
 
-    // ✅ 1) Fetch event details (EVENT_NAME, EVENT_DATE, LOCATION_NAME)
-    final eventDoc = await db.collection("EVENTS").doc(eventId).get();
-    final eventData = eventDoc.data() ?? {};
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? adminName = prefs.getString('adminName').toString();
+    String? adminID = prefs.getString('adminID').toString();
 
-    final String eventName = eventData["EVENT_NAME"] ?? "";
-    final String eventDate = eventData["EVENT_DATE"] ?? "";
-    final String locationName = eventData["LOCATION_NAME"] ?? "";
+    try {
+      final now = Timestamp.now();
 
-    // ✅ 2) Fetch boy details (BOY_NAME, BOY_PHONE)
-    // you can get boy details from EVENTS/CONFIRMED_BOYS also.
-    final boyDoc = await db
-        .collection("EVENTS")
-        .doc(eventId)
-        .collection("CONFIRMED_BOYS")
-        .doc(boyId)
-        .get();
+      final double totalAmount = amount + extraAmount;
 
-    final boyData = boyDoc.data() ?? {};
+      // // 🔒 Prevent overpayment (optional but recommended)
+      // if (totalAmount > wage) {
+      //   throw Exception("Payment exceeds wage amount");
+      // }
 
-    final String boyName = boyData["BOY_NAME"] ?? "";
-    final String boyPhone = boyData["BOY_PHONE"] ?? "";
+      /// ✅ 1) Fetch event details
+      final eventDoc = await db.collection("EVENTS").doc(eventId).get();
+      final eventData = eventDoc.data() ?? {};
 
-    // ✅ 3) Create PAYMENT_REPORT history record (NEW doc each payment)
-    final paymentRef = db.collection("PAYMENTS_REPORT").doc(); // auto doc id
+      final String eventName = eventData["EVENT_NAME"] ?? "";
+      final String eventDate = eventData["EVENT_DATE"] ?? "";
+      final String locationName = eventData["LOCATION_NAME"] ?? "";
 
-    final reportModel = PaymentReportModel(
-      paymentId: paymentRef.id,
-      eventId: eventId,
-      boyId: boyId,
-      eventName: eventName,
-      eventDate: eventDate,
-      locationName: locationName,
-      boyName: boyName,
-      boyPhone: boyPhone,
-      paymentAmount: amount,
-      paymentUpdatedAt: DateTime.now(),
-    );
-
-    // ✅ 4) Batch commit for production safety
-    final batch = db.batch();
-
-    // update in EVENTS
-    batch.update(
-      db
+      /// ✅ 2) Fetch boy details
+      final boyDoc = await db
           .collection("EVENTS")
           .doc(eventId)
           .collection("CONFIRMED_BOYS")
-          .doc(boyId),
-      {
-        "PAYMENT_AMOUNT": amount,
-        "PAYMENT_UPDATED_AT": now,
-      },
-    );
+          .doc(boyId)
+          .get();
 
-    // update in BOYS
-    batch.update(
-      db.collection("BOYS").doc(boyId).collection("CONFIRMED_WORKS").doc(eventId),
-      {
-        "PAYMENT_AMOUNT": amount,
-        "PAYMENT_UPDATED_AT": now,
-      },
-    );
+      final boyData = boyDoc.data() ?? {};
 
-    // ✅ insert history doc in PAYMENT_REPORT
-    batch.set(paymentRef, reportModel.toMap());
+      final String boyName = boyData["BOY_NAME"] ?? "";
+      final String boyPhone = boyData["BOY_PHONE"] ?? "";
 
-    await batch.commit();
+      /// ✅ 3) Create PAYMENT_REPORT history record
+      final paymentRef = db.collection("PAYMENTS_REPORT").doc();
 
-    // ✅ Local list update
-    final index = confirmedBoysList.indexWhere((e) => e.boyId == boyId);
-    if (index != -1) {
-      confirmedBoysList[index] =
-          confirmedBoysList[index].copyWith(paymentAmount: amount);
+      final reportModel = PaymentReportModel(
+        paymentId: paymentRef.id,
+        eventId: eventId,
+        boyId: boyId,
+        eventName: eventName,
+        eventDate: eventDate,
+        locationName: locationName,
+        boyName: boyName,
+        boyPhone: boyPhone,
+        paymentAmount: totalAmount,
+        extraAmount: extraAmount,
+        remark: remark,
+        wage: wage,
+        paymentUpdatedAt: DateTime.now(),
+      );
+
+      /// ✅ 4) Batch commit
+      final batch = db.batch();
+
+      // 🔹 Update in EVENTS
+      batch.update(
+        db
+            .collection("EVENTS")
+            .doc(eventId)
+            .collection("CONFIRMED_BOYS")
+            .doc(boyId),
+        {
+          "PAYMENT_AMOUNT": totalAmount,
+          "EXTRA_AMOUNT": extraAmount,
+          "REMARK": remark,
+          "PAYMENT_UPDATED_AT": now,
+          'PAYED_BY_NAME': adminName,
+          'PAYED_BY_ID':adminID,
+        },
+      );
+
+      // 🔹 Update in BOYS
+      batch.update(
+        db
+            .collection("BOYS")
+            .doc(boyId)
+            .collection("CONFIRMED_WORKS")
+            .doc(eventId),
+        {
+          "PAYMENT_AMOUNT": totalAmount,
+          "EXTRA_AMOUNT": extraAmount,
+          "REMARK": remark,
+          "PAYMENT_UPDATED_AT": now,
+          'PAYED_BY_NAME': adminName,
+          'PAYED_BY_ID':adminID,
+        },
+      );
+
+      // 🔹 Insert history doc
+      batch.set(paymentRef, reportModel.toMap());
+
+      await batch.commit();
+
+      /// ✅ Local list update
+      final index =
+      confirmedBoysList.indexWhere((e) => e.boyId == boyId);
+
+      if (index != -1) {
+        confirmedBoysList[index] = confirmedBoysList[index].copyWith(
+          paymentAmount: totalAmount,
+        );
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Payment Save Error: $e");
+      rethrow;
     }
-
-    notifyListeners();
   }
 
 
