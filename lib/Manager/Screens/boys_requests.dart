@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../Boys/Screens/boy_registration.dart';
 import '../Models/BoysRequestModel.dart';
 import '../Providers/ManagerProvider.dart';
 
@@ -58,106 +59,23 @@ class BoysRequestScreen extends StatelessWidget {
         ),
         subtitle: Text(doc.phone),
         trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () => _showBoyDetails(context, doc),
+        // onTap: () => _showBoyDetails(context, doc),
+        onTap: (){
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RegisterBoyScreen(
+                registeredBy: "MANAGER",
+                editBoyModel: doc, // 👈 pass full model
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  void _showBoyDetails(BuildContext context, BoyRequestModel doc) {
-    final provider = context.read<ManagerProvider>();
-    final TextEditingController wageController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Boy Details"),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _detailRow("Name", doc.name),
-                _detailRow("Phone", doc.phone),
-                _detailRow("Guardian Phone", doc.guardianPhone),
-                _detailRow("Blood Group", doc.bloodGroup),
-                _detailRow("DOB", doc.dob),
-                _detailRow("Address", doc.address),
-                _detailRow("Place", doc.place),
-                _detailRow("District", doc.district),
-                _detailRow("Pin Code", doc.pinCode),
-
-                const SizedBox(height: 16),
-                const Text(
-                  "Wage (₹)",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: wageController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: "Enter wage",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.all(16),
-          actions: [
-            OutlinedButton(
-              onPressed: () async {
-                await provider.updateBoyStatus(doc.docId, "REJECTED",0);
-                Navigator.pop(context);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
-              child: const Text("Reject"),
-            ),
-
-            ElevatedButton(
-              onPressed: () async {
-                final wageText = wageController.text.trim();
-                if (wageText.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please enter wage")),
-                  );
-                  return;
-                }
-
-                final double wage = double.tryParse(wageText) ?? 0;
-
-                await provider.updateBoyStatus(doc.docId, "APPROVED", wage);
-
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-              ),
-              child: const Text("Approve"),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Widget _detailRow(String title, String value) {
     return Padding(

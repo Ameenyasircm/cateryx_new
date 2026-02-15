@@ -866,5 +866,11 @@ class ManagerProvider extends ChangeNotifier{
     upcomingEventsList.removeWhere((event) => event.eventId == eventId);
     notifyListeners();
   }
+
+  void approveBoyListClear(String boyID) {
+    pendingBoysList.removeWhere((e) => e.docId == boyID);
+    notifyListeners();
+  }
+
 }
 

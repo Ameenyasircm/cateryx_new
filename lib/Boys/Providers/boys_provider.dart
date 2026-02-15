@@ -421,6 +421,47 @@ class BoysProvider extends ChangeNotifier{
       notifyListeners();
     }
   }
+
+
+  Future<void> approveEditedBoy(BuildContext context, String docId) async {
+    print('$docId DOCISSS');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? adminName = prefs.getString('adminName');
+    String? adminID = prefs.getString('adminID');
+    try {
+      isRegisteringBoy = true;
+      notifyListeners();
+
+      await db.collection("BOYS").doc(docId).update({
+        "NAME": boyNameController.text.trim(),
+        "PHONE": phoneController.text.trim(),
+        "GUARDIAN_PHONE": guardianController.text.trim(),
+        "DOB": dobController.text.trim(),
+        "PLACE": placeController.text.trim(),
+        "DISTRICT": districtController.text.trim(),
+        "PIN_CODE": pinController.text.trim(),
+        "ADDRESS": addressController.text.trim(),
+        "WAGE": double.tryParse(wageController.text.trim()) ?? 0,
+        "STATUS": "APPROVED",
+        "APPROVED_TIME": FieldValue.serverTimestamp(),
+        "APPROVED_BY": adminName,
+        "APPROVED_BY_ID": adminID,
+      });
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Boy Approved Successfully")),
+      );
+    } catch (e) {
+      debugPrint("Approve Error: $e");
+    } finally {
+      isRegisteringBoy = false;
+      notifyListeners();
+    }
+  }
+
+
   String? validateRegistration() {
     if (boyPhoto == null) return "Please upload boy photo";
     if (aadhaarPhoto == null) return "Please upload aadhaar photo";

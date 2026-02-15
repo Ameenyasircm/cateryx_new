@@ -1,16 +1,44 @@
+import 'package:cateryyx/Constants/my_functions.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../Manager/Models/BoysRequestModel.dart';
+import '../../Manager/Providers/ManagerProvider.dart';
 import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
 import '../Providers/boys_provider.dart';
 
-class RegisterBoyScreen extends StatelessWidget {
+class RegisterBoyScreen extends StatefulWidget {
   final String registeredBy;
-  RegisterBoyScreen({super.key,required this.registeredBy});
+  final BoyRequestModel? editBoyModel;
+  RegisterBoyScreen({super.key,required this.registeredBy,this.editBoyModel});
 
+  @override
+  State<RegisterBoyScreen> createState() => _RegisterBoyScreenState();
+}
+
+class _RegisterBoyScreenState extends State<RegisterBoyScreen> {
   final formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.editBoyModel != null) {
+      final provider = context.read<BoysProvider>();
+      provider.boyNameController.text = widget.editBoyModel!.name;
+      provider.phoneController.text = widget.editBoyModel!.phone;
+      provider.guardianController.text = widget.editBoyModel!.guardianPhone;
+      provider.dobController.text = widget.editBoyModel!.dob;
+      provider.placeController.text = widget.editBoyModel!.place;
+      provider.districtController.text = widget.editBoyModel!.district;
+      provider.pinController.text = widget.editBoyModel!.pinCode;
+      provider.addressController.text = widget.editBoyModel!.address;
+      provider.wageController.text = "0"; // or existing wage
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +91,7 @@ class RegisterBoyScreen extends StatelessWidget {
                     maxLength: 10,
                   ),
 
-                  if (registeredBy == "MANAGER") ...[
+                  if (widget.registeredBy == "MANAGER") ...[
                     const SizedBox(height: 15),
                     _label("Wage (Manager Entry)"),
                     _textField(
@@ -264,13 +292,28 @@ class RegisterBoyScreen extends StatelessWidget {
                       onPressed: provider.isRegisteringBoy
                           ? null
                           : () {
+                        ManagerProvider managerPro =
+                        Provider.of<ManagerProvider>(context, listen: false);
                         if (!formKey.currentState!.validate()) return;
-                        final error = provider.validateRegistration();
-                        if (error != null) {
-                          NotificationSnack.showError(error);
-                          return;
+                        // final error = provider.validateRegistration();
+                        // if (error != null) {
+                        //   NotificationSnack.showError(error);
+                        //   return;
+                        // }
+                        if (widget.editBoyModel != null) {
+                          provider.approveEditedBoy(
+                            context,
+                            widget.editBoyModel!.docId,
+                          );
+
+                          managerPro.approveBoyListClear( widget.editBoyModel!.docId,);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Approved Successfully")),
+                          );
+                          finish(context);
+                        } else {
+                          provider.registerNewBoyFun(context, widget.registeredBy);
                         }
-                        provider.registerNewBoyFun(context, registeredBy);
 
                       },
                       style: ElevatedButton.styleFrom(
@@ -606,25 +649,25 @@ class RegisterBoyScreen extends StatelessWidget {
 
     return Consumer<BoysProvider>(
       builder: (contextss,provider,cho) {
-        return DropdownButtonFormField<String>(
-          value: provider.districtController.text.isEmpty
-              ? null
-              : provider.districtController.text,
-          decoration: _decoration("Select district", Icons.map),
-          items: districts.map((d) {
-            return DropdownMenuItem<String>(
-              value: d,
-              child: Text(d),
-            );
-          }).toList(),
-          onChanged: (value) {
-            provider.districtController.text = value ?? "";
-            print('${provider.districtController.text} KFNEJRERKF ');
-          },
-          validator: (v) => (v == null || v.isEmpty) ? "Required field" : null,
-        );
+        return
+          DropdownButtonFormField<String>(
+            value: districts.contains(provider.districtController.text)
+                ? provider.districtController.text
+                : null,
+            decoration: _decoration("Select district", Icons.map),
+            items: districts.map((d) {
+              return DropdownMenuItem<String>(
+                value: d,
+                child: Text(d),
+              );
+            }).toList(),
+            onChanged: (value) {
+              provider.districtController.text = value ?? "";
+            },
+            validator: (v) =>
+            (v == null || v.isEmpty) ? "Required field" : null,
+          );
       }
     );
   }
-
 }
