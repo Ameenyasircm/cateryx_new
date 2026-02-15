@@ -209,13 +209,14 @@ class EventPaymentScreen extends StatelessWidget {
                                 Text(
                                   "₹${(boy.paymentAmount - boy.wage).toStringAsFixed(0)}",
                                   style: TextStyle(
-                                    color: Colors.green,
+                                    color: Colors.black,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
                           ],
+
                         ),
                       ),
 
