@@ -96,6 +96,10 @@ class EventPaymentScreen extends StatelessWidget {
                           Text(
                             "${boy.boyPhone} • Present",
                             style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),const SizedBox(height: 4),
+                          Text(
+                            "Wage : ${boy.wage}",
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
                       ),

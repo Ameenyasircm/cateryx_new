@@ -456,6 +456,7 @@ class EventDetailsProvider extends ChangeNotifier {
         'BOY_ID': boyId,
         'BOY_NAME': boy['NAME'],
         'BOY_PHONE': boy['PHONE'],
+        'WAGE': boy['WAGE'],
         'STATUS': 'CONFIRMED',
         'ATTENDANCE_STATUS': 'PENDING',
         'CONFIRMED_AT': FieldValue.serverTimestamp(),

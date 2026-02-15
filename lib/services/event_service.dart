@@ -129,7 +129,7 @@ class EventService {
           // Boy details
           'BOY_NAME': boyName,
           'BOY_PHONE': boyPhone,
-
+          'WAGE':data['WAGE'],
           // Status
           'STATUS': 'CONFIRMED',
           'ATTENDANCE_STATUS': 'PENDING',

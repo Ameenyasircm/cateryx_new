@@ -8,6 +8,7 @@ class ConfirmedBoyModel {
   final String attendanceStatus;
   final Timestamp? attendanceMarkedAt;
   final double paymentAmount;
+  final double wage;
 
   ConfirmedBoyModel({
     required this.boyId,
@@ -17,6 +18,7 @@ class ConfirmedBoyModel {
     required this.attendanceStatus,
     this.attendanceMarkedAt,
     required this.paymentAmount,
+    required this.wage,
   });
 
   factory ConfirmedBoyModel.fromMap(Map<String, dynamic> map) {
@@ -28,6 +30,7 @@ class ConfirmedBoyModel {
       attendanceStatus: map['ATTENDANCE_STATUS'] ?? 'PENDING',
       attendanceMarkedAt: map['ATTENDANCE_MARKED_AT'],
       paymentAmount: (map['PAYMENT_AMOUNT'] as num?)?.toDouble() ?? 0.0,
+      wage: (map['WAGE'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -35,6 +38,7 @@ class ConfirmedBoyModel {
     String? attendanceStatus,
     Timestamp? attendanceMarkedAt,
     double? paymentAmount,
+    double? wage,
   }) {
     return ConfirmedBoyModel(
       boyId: boyId,
@@ -45,6 +49,7 @@ class ConfirmedBoyModel {
       attendanceMarkedAt:
       attendanceMarkedAt ?? this.attendanceMarkedAt,
       paymentAmount: paymentAmount ?? this.paymentAmount,
+      wage: wage ?? this.wage,
     );
   }
 }
