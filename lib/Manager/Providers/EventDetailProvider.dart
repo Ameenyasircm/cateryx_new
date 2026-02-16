@@ -954,6 +954,54 @@ class EventDetailsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  Future<void> addMenuItem({
+    required String eventId,
+    required String foodName,
+    required String category,
+    required double price,
+  }) async {
+    try {
+      final menuRef = FirebaseFirestore.instance
+          .collection('EVENTS')
+          .doc(eventId)
+          .collection('MENU')
+          .doc();
+
+      await menuRef.set({
+        'FOOD_ID': menuRef.id,
+        'FOOD_NAME': foodName,
+        'CATEGORY': category,
+        'PRICE': price,
+        'CREATED_AT': FieldValue.serverTimestamp(),
+      });
+      listenMenu(eventId);
+    } catch (e) {
+      throw Exception("Failed to add menu: $e");
+    }
+  }
+
+  List<Map<String, dynamic>> menuList = [];
+
+  void listenMenu(String eventId) {
+    FirebaseFirestore.instance
+        .collection('EVENTS')
+        .doc(eventId)
+        .collection('MENU')
+        .orderBy('CREATED_AT', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+
+      menuList = snapshot.docs
+          .map((doc) => doc.data())
+          .toList();
+
+      notifyListeners();
+    });
+  }
+
+
+
 }
 
 

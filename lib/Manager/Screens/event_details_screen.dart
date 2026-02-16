@@ -237,8 +237,119 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                             ),
                           ],
                         ),
-
+                          AppSpacing.h14,
+                          _outlineButton(
+                            text: 'Add Menu',
+                            textColor: Colors.black,
+                            onTap: () async {
+                              showAddMenuDialog(context,provider.eventModel!.eventId);
+                            },
+                          ),
                         AppSpacing.h20,
+                          Consumer<EventDetailsProvider>(
+                            builder: (contextrr, provider, _) {
+                              if (provider.menuList.isEmpty) {
+                                return const Center(child: Text(""));
+                              }
+
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: provider.menuList.length,
+                                itemBuilder: (context, index) {
+                                  final item = provider.menuList[index];
+
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(vertical: 6),
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+
+                                        /// 🔹 Food Icon
+                                        Container(
+                                          height: 45,
+                                          width: 45,
+                                          decoration: BoxDecoration(
+                                            color: Colors.deepPurple.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.restaurant_menu,
+                                              color: Colors.deepPurple),
+                                        ),
+
+                                        const SizedBox(width: 12),
+
+                                        /// 🔹 Food Details
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item['FOOD_NAME'] ?? '',
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 6),
+
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade200,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  item['CATEGORY'] ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        /// 🔹 Price Badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Text(
+                                            "₹${item['PRICE'] ?? 0}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.green,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                          AppSpacing.h20,
 
                           /// Work Status
                         Container(
@@ -617,6 +728,56 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
       },
     );
   }
+
+  void showAddMenuDialog(BuildContext context, String eventId) {
+    final foodController = TextEditingController();
+    final categoryController = TextEditingController();
+    final priceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Add Food Item"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: foodController,
+              decoration: const InputDecoration(labelText: "Food Name"),
+            ),
+            TextField(
+              controller: categoryController,
+              decoration: const InputDecoration(labelText: "Category"),
+            ),
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Price"),
+            ),
+          ],
+        ),
+        actions: [
+          Consumer<EventDetailsProvider>(
+            builder: (contextss,val,chil) {
+              return TextButton(
+                onPressed: () async {
+                  await val.addMenuItem(
+                    eventId: eventId,
+                    foodName: foodController.text,
+                    category: categoryController.text,
+                    price: double.tryParse(priceController.text) ?? 0,
+                  );
+                  Navigator.pop(context);
+                },
+                child: const Text("Save"),
+              );
+            }
+          )
+        ],
+      ),
+    );
+  }
+
 
 }
 
