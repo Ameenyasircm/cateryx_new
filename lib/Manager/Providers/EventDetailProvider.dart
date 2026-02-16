@@ -459,6 +459,7 @@ class EventDetailsProvider extends ChangeNotifier {
         'EVENT_ID': eventId,
         'BOY_ID': boyId,
         'BOY_NAME': boy['NAME'],
+        'BOY_PHOTO_URL': boy['BOY_PHOTO_URL'],
         'BOY_PHONE': boy['PHONE'],
         'WAGE': boy['WAGE'],
         'STATUS': 'CONFIRMED',

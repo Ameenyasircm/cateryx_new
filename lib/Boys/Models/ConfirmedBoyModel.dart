@@ -14,6 +14,7 @@ class ConfirmedBoyModel {
   final double wage;
 
   final String remark;
+  final String photo;
 
   ConfirmedBoyModel({
     required this.boyId,
@@ -26,6 +27,7 @@ class ConfirmedBoyModel {
     required this.extraAmount,
     required this.wage,
     required this.remark,
+    required this.photo,
   });
 
   /// 🔹 From Firestore Map
@@ -43,6 +45,7 @@ class ConfirmedBoyModel {
       (map['EXTRA_AMOUNT'] as num?)?.toDouble() ?? 0.0,
       wage: (map['WAGE'] as num?)?.toDouble() ?? 0.0,
       remark: map['REMARK'] ?? '',
+      photo: map['BOY_PHOTO_URL'] ?? '',
     );
   }
 
@@ -70,6 +73,7 @@ class ConfirmedBoyModel {
       extraAmount ?? this.extraAmount,
       wage: wage ?? this.wage,
       remark: remark ?? this.remark,
+      photo: photo ?? this.photo,
     );
   }
 
@@ -86,6 +90,7 @@ class ConfirmedBoyModel {
       "EXTRA_AMOUNT": extraAmount,
       "WAGE": wage,
       "REMARK": remark,
+      'BOY_PHOTO_URL':photo
     };
   }
 }

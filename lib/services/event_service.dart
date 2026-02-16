@@ -78,49 +78,67 @@ class EventService {
       final prefs = await SharedPreferences.getInstance();
       final String boyName = prefs.getString('boyName') ?? '';
       final String boyPhone = prefs.getString('boyPhone') ?? '';
-      print("sssssssssssssss $boyId  $eventId");
-      
+
       if (boyId.isEmpty) throw Exception('Boy not logged in');
 
       final eventRef = _db.collection('EVENTS').doc(eventId);
-      final confirmedBoyRef = eventRef.collection('CONFIRMED_BOYS').doc(boyId);
+      final confirmedBoyRef =
+      eventRef.collection('CONFIRMED_BOYS').doc(boyId);
       final boyWorkRef = _db
           .collection('BOYS')
           .doc(boyId)
           .collection('CONFIRMED_WORKS')
           .doc(eventId);
 
+      /// 🔥 NEW: Reference to BOYS document
+      final boyRef = _db.collection('BOYS').doc(boyId);
+
       await _db.runTransaction((transaction) async {
-        // Read event document
+
+        /// 1️⃣ Read Event
         final eventSnap = await transaction.get(eventRef);
         if (!eventSnap.exists) throw Exception('Event not found');
 
-        final data = eventSnap.data()!;
-        final int required = data['BOYS_REQUIRED'] ?? 0;
-        final int taken = data['BOYS_TAKEN'] ?? 0;
+        final eventData = eventSnap.data()!;
+        final int required = eventData['BOYS_REQUIRED'] ?? 0;
+        final int taken = eventData['BOYS_TAKEN'] ?? 0;
 
         if (taken >= required) throw Exception('All slots filled');
 
-        // Check duplicates (sequentially, to keep the transaction simple)
+        /// 2️⃣ Read Boy Document  🔥
+        final boySnap = await transaction.get(boyRef);
+        if (!boySnap.exists) throw Exception('Boy not found');
+
+        final boyData = boySnap.data()!;
+        final String wage = boyData['WAGE'] ?? '';
+        final String photoUrl = boyData['BOY_PHOTO_URL'] ?? '';
+
+        /// 3️⃣ Check duplicates
         final confirmedBoySnap = await transaction.get(confirmedBoyRef);
         final boyWorkSnap = await transaction.get(boyWorkRef);
 
-        if (confirmedBoySnap.exists) throw Exception('Already took this work');
-        if (boyWorkSnap.exists) throw Exception('Work already exists');
+        if (confirmedBoySnap.exists) {
+          throw Exception('Already took this work');
+        }
+        if (boyWorkSnap.exists) {
+          throw Exception('Work already exists');
+        }
 
         final updatedTaken = taken + 1;
 
-        // Update event TAKEN COUNT
+        /// 4️⃣ Update event taken count
         final updateData = <String, dynamic>{
           'BOYS_TAKEN': updatedTaken,
         };
+
         if (updatedTaken == required) {
           updateData['BOYS_STATUS'] = 'FULL';
         }
+
         transaction.update(eventRef, updateData);
 
         /// -----------------------------------------------------------------
-        /// 🚀 STORE ONLY MINIMUM, IMPORTANT EVENT DATA
+        /// 🚀 STORE MINIMUM IMPORTANT DATA
         /// -----------------------------------------------------------------
         final minimalEventData = {
           'EVENT_ID': eventId,
@@ -129,30 +147,35 @@ class EventService {
           // Boy details
           'BOY_NAME': boyName,
           'BOY_PHONE': boyPhone,
-          'WAGE':data['WAGE'],
+          'BOY_PHOTO_URL': photoUrl,   // ✅ NEW
+          'WAGE': wage,                // ✅ From BOYS collection
+
           // Status
           'STATUS': 'CONFIRMED',
           'ATTENDANCE_STATUS': 'PENDING',
           'CONFIRMED_AT': FieldValue.serverTimestamp(),
 
-          // ⬇️ Only these four event fields will be saved
-          'EVENT_NAME': data['EVENT_NAME'],
-          'EVENT_DATE': data['EVENT_DATE'],
-          'EVENT_DATE_TS': data['EVENT_DATE_TS'],
-          'LOCATION_NAME': data['LOCATION_NAME'],
-          'LATITUDE': data['LATITUDE'],
-          'LONGITUDE': data['LONGITUDE'],
-          'MEAL_TYPE': data['MEAL_TYPE'],
-          'CLIENT_NAME': data['CLIENT_NAME'],
+          // Event details
+          'EVENT_NAME': eventData['EVENT_NAME'],
+          'EVENT_DATE': eventData['EVENT_DATE'],
+          'EVENT_DATE_TS': eventData['EVENT_DATE_TS'],
+          'LOCATION_NAME': eventData['LOCATION_NAME'],
+          'LATITUDE': eventData['LATITUDE'],
+          'LONGITUDE': eventData['LONGITUDE'],
+          'MEAL_TYPE': eventData['MEAL_TYPE'],
+          'CLIENT_NAME': eventData['CLIENT_NAME'],
         };
 
-        // EVENTS → CONFIRMED_BOYS
+        /// EVENTS → CONFIRMED_BOYS
         transaction.set(confirmedBoyRef, minimalEventData);
 
-        // BOYS → CONFIRMED_WORKS
+        /// BOYS → CONFIRMED_WORKS
         transaction.set(boyWorkRef, minimalEventData);
-        await fetchUpcomingEvents(boyId);
       });
+
+      /// Call after transaction completes
+      await fetchUpcomingEvents(boyId);
+
     } on FirebaseException catch (e) {
       throw Exception('Firestore error: ${e.message}');
     } catch (e) {

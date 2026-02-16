@@ -202,13 +202,13 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
                             ),
                             Expanded(
                               child: _outlineButton(
-                                text: 'Close Event',
+                                text: 'Complete Event',
                                 textColor: Colors.black,
                                 onTap: () async {
                                   final isConfirmed = await showConfirmationDialog(
                                     context: context,
-                                    title: 'Close Event',
-                                    message: 'Are you sure you want to close this event?',
+                                    title: 'Complete Event',
+                                    message: 'Are you sure you want to Complete this event?',
                                     confirmText: 'Close',
                                     cancelText: 'Cancel',
                                   );

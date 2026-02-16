@@ -149,7 +149,6 @@ class EventAllBoys extends StatelessWidget {
                 itemCount: provider.confirmedBoysList.length,
                 itemBuilder: (contexted, index) {
                   final boy = provider.confirmedBoysList[index];
-
                   return InkWell(
                     onLongPress: (){
                       showDeleteBoyDialog(context,eventId,boy.boyId,boy.boyName,eventDetailsProvider);
@@ -170,10 +169,21 @@ class EventAllBoys extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const CircleAvatar(
-                            radius: 26,
-                            child: Icon(Icons.person, size: 28),
+                        CircleAvatar(
+                        radius: 26,
+                        child: ClipOval(
+                          child: Image.network(
+                            boy.photo ?? '',
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person, size: 28);
+                            },
                           ),
+                        ),
+                      ),
+
                           const SizedBox(width: 12),
 
                           Expanded(
