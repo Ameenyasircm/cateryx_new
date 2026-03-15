@@ -113,7 +113,7 @@ class BoysProvider extends ChangeNotifier{
       if (source != null) {
         final XFile? pickedFile = await _imagePicker.pickImage(
           source: source,
-          imageQuality: 85,
+          imageQuality: 15,
         );
 
         if (pickedFile != null) {
@@ -139,7 +139,7 @@ class BoysProvider extends ChangeNotifier{
           return SafeArea(
             child: Wrap(
               children: [
-                AppSpacing.h10,
+                AppSpacing.h14,
                 ListTile(
                   leading: const Icon(Icons.photo_library),
                   title: const Text('Gallery'),
@@ -159,7 +159,7 @@ class BoysProvider extends ChangeNotifier{
       if (source != null) {
         final XFile? pickedFile = await _imagePicker.pickImage(
           source: source,
-          imageQuality: 85,
+          imageQuality: 30,
         );
 
         if (pickedFile != null) {
@@ -271,7 +271,7 @@ class BoysProvider extends ChangeNotifier{
           // Get public URL
           final publicUrl = supabase.storage
               .from('boys_aadhaar')
-              .getPublicUrl(filePath);
+              .getPublicUrl(filePath,);
           
           boyPhotoUrl = publicUrl;
         } catch (e) {
