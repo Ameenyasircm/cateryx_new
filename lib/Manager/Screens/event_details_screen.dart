@@ -211,10 +211,11 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
           ),
           const SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _headerChip(Icons.calendar_month_outlined, event.eventDate),
+              Flexible(child: _headerChip(Icons.calendar_month_outlined, event.eventDate)),
               const SizedBox(width: 10),
-              _headerChip(Icons.location_on_outlined, event.locationName),
+              Flexible(child: _headerChip(Icons.location_on_outlined, event.locationName)),
             ],
           ),
         ],
@@ -230,14 +231,17 @@ class _EventDetailedScreenState extends State<EventDetailedScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: Colors.white70),
           const SizedBox(width: 5),
-          Text(label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white, fontSize: 12)),
+          Flexible(
+            child: Text(label,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 12)),
+          ),
         ],
       ),
     );

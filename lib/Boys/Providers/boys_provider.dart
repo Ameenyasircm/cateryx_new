@@ -274,10 +274,10 @@ class BoysProvider extends ChangeNotifier{
               .getPublicUrl(filePath,);
           
           boyPhotoUrl = publicUrl;
-        } catch (e) {
+        } catch (e,stack) {
           isRegisteringBoy = false;
           notifyListeners();
-          debugPrint("Error uploading boy photo: $e");
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Failed to upload boy photo: ${e.toString()}")),
