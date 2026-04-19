@@ -74,6 +74,7 @@ class EventService {
 
   /// Take a work
   Future<void> takeWork(String eventId, String boyId) async {
+    print(' JRFNRHJRNHJRF ');
     try {
       final prefs = await SharedPreferences.getInstance();
       final String boyName = prefs.getString('boyName') ?? '';
@@ -110,7 +111,7 @@ class EventService {
         if (!boySnap.exists) throw Exception('Boy not found');
 
         final boyData = boySnap.data()!;
-        final String wage = boyData['WAGE'] ?? '';
+        final wage = boyData['WAGE']?.toString() ?? '0';
         final String photoUrl = boyData['BOY_PHOTO_URL'] ?? '';
 
         /// 3️⃣ Check duplicates
@@ -179,6 +180,8 @@ class EventService {
     } on FirebaseException catch (e) {
       throw Exception('Firestore error: ${e.message}');
     } catch (e) {
+      print('$e IFNREJF ');
+
       throw Exception('Error taking work: $e');
     }
   }
