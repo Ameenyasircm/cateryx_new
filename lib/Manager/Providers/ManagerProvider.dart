@@ -125,7 +125,11 @@ class ManagerProvider extends ChangeNotifier{
       final String eventId = "EVT${DateTime.now().millisecondsSinceEpoch}";
       final String eventName = nameController.text.trim();
       final String location = locationController.text.trim();
+      final prefs=await SharedPreferences.getInstance();
 
+      String adminId=prefs.getString('adminID')??"";
+      String adminName=prefs.getString('adminName')??"";
+      String adminPhone=prefs.getString('phone_number')??"";
       // ------------------------------
       // 🔥 Generate Search Keywords
       // ------------------------------
@@ -169,6 +173,9 @@ class ManagerProvider extends ChangeNotifier{
         "EVENT_STATUS":
         publishType == PublishType.now ? "UPCOMING" : "NOT_PUBLISHED",
         "CREATED_TIME": FieldValue.serverTimestamp(),
+        "CREATED_BY_ID":adminId,
+        "CREATED_BY_PHONE":adminPhone,
+        "CREATED_BY":adminName,
         "SEARCH_KEYWORDS": finalKeywords,
       });
 
@@ -386,9 +393,11 @@ class ManagerProvider extends ChangeNotifier{
     notifyListeners();
 
     try {
+      final prefs=await SharedPreferences.getInstance();
+      String adminId=prefs.getString('adminID')??"";
       final snapshot = await db
-          .collection('EVENTS').where('STATUS',isEqualTo: 'DRAFT')
-          // .orderBy('EVENT_DATE_TS', descending: false)
+          .collection('EVENTS').where('STATUS',isEqualTo: 'DRAFT').
+        where('CREATED_BY_ID',isEqualTo: adminId)
           .get();
 
 
@@ -408,10 +417,14 @@ class ManagerProvider extends ChangeNotifier{
     runningEventsList.clear();
     isLoading = true;
     notifyListeners();
+    final prefs=await SharedPreferences.getInstance();
+    String adminId=prefs.getString('adminID')??"";
 
     try {
       final snapshot = await db
-          .collection('EVENTS').where('STATUS',isEqualTo: 'PUBLISHED')
+          .collection('EVENTS').
+      where('STATUS',isEqualTo: 'PUBLISHED').
+      where('CREATED_BY_ID',isEqualTo: adminId)
       // .orderBy('EVENT_DATE_TS', descending: false)
           .get();
 
@@ -426,8 +439,6 @@ class ManagerProvider extends ChangeNotifier{
     isLoading = false;
     notifyListeners();
   }
-
-
 
   Future<bool> updateBoyPassword(
       BuildContext context,
