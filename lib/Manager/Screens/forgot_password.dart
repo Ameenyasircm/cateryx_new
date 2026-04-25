@@ -5,7 +5,6 @@ import 'package:cateryyx/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../Providers/ManagerProvider.dart';
 import 'LoginScreen.dart';

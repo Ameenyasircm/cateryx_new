@@ -13,7 +13,6 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../Constants/my_functions.dart';
 import '../../Manager/Providers/EventDetailProvider.dart';
@@ -21,6 +20,8 @@ import '../../Manager/Providers/LoginProvider.dart';
 import '../../Manager/Providers/ManagerProvider.dart';
 import '../../Manager/Screens/manager_bottom.dart';
 import '../../core/utils/alert_utils.dart';
+import '../../core/utils/snackBarNotifications/snackBar_notifications.dart';
+import '../../services/cloudinary_service.dart';
 import '../Screens/navbar/boy_bottomNav.dart';
 import '../Screens/pending_admin_approval.dart';
 
@@ -252,37 +253,18 @@ class BoysProvider extends ChangeNotifier{
 
       /// ✅ STEP 2: REGISTER BOY
       final boyId = "BOY${DateTime.now().millisecondsSinceEpoch}";
+      final cloudinaryService = CloudinaryService();
 
       /// ✅ STEP 3: UPLOAD BOY PHOTO (if provided)
       String? boyPhotoUrl;
       if (boyPhoto != null) {
         try {
-          final supabase = Supabase.instance.client;
-          final filePath = 'profile_$boyId.jpg';
-          
-          // Upload to Supabase Storage (pass File directly)
-          await supabase.storage
-              .from('boys_aadhaar')
-              .upload(filePath, boyPhoto!, fileOptions: const FileOptions(
-                contentType: 'image/jpeg',
-                upsert: false,
-              ));
-          
-          // Get public URL
-          final publicUrl = supabase.storage
-              .from('boys_aadhaar')
-              .getPublicUrl(filePath,);
-          
-          boyPhotoUrl = publicUrl;
-        } catch (e,stack) {
+          boyPhotoUrl = await cloudinaryService.uploadImage(boyPhoto!);
+        } catch (e) {
           isRegisteringBoy = false;
           notifyListeners();
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Failed to upload boy photo: ${e.toString()}")),
-            );
-          }
+          NotificationSnack.showError(e.toString());
           return;
         }
       }
@@ -291,32 +273,12 @@ class BoysProvider extends ChangeNotifier{
       String? aadhaarPhotoUrl;
       if (aadhaarPhoto != null) {
         try {
-          final supabase = Supabase.instance.client;
-          final filePath = 'aadhaar_$boyId.jpg';
-          
-          // Upload to Supabase Storage (pass File directly)
-          await supabase.storage
-              .from('boys_aadhaar')
-              .upload(filePath, aadhaarPhoto!, fileOptions: const FileOptions(
-                contentType: 'image/jpeg',
-                upsert: false,
-              ));
-          
-          // Get public URL
-          final publicUrl = supabase.storage
-              .from('boys_aadhaar')
-              .getPublicUrl(filePath);
-          
-          aadhaarPhotoUrl = publicUrl;
+          aadhaarPhotoUrl = await cloudinaryService.uploadImage(aadhaarPhoto!);
         } catch (e) {
           isRegisteringBoy = false;
           notifyListeners();
           debugPrint("Error uploading Aadhaar photo: $e");
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Failed to upload Aadhaar photo: ${e.toString()}")),
-            );
-          }
+          NotificationSnack.showError(e.toString());
           return;
         }
       }
@@ -804,7 +766,7 @@ class BoysProvider extends ChangeNotifier{
                   useMaterial3: true,
                   primarySwatch: Colors.blue,
                 ),
-                home: ManagerBottom(adminPhone: phone!,adminName:name! ,adminID: id!,isLockBool: true,),
+                home: ManagerBottom(adminPhone: phone??'',adminName:name??'' ,adminID: id??'',isLockBool: true,),
               ),
             ),
           );
@@ -851,7 +813,7 @@ class BoysProvider extends ChangeNotifier{
                   useMaterial3: true,
                   primarySwatch: Colors.blue,
                 ),
-                home: ManagerBottom(adminPhone: phone!,adminName:name! ,adminID: id!,isLockBool: true,),
+                home: ManagerBottom(adminPhone: phone??'',adminName:name??'' ,adminID: id??'',isLockBool: true,),
               ),
             ),
           );
