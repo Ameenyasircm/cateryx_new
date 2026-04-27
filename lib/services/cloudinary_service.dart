@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cloudinary_public/cloudinary_public.dart';
+import 'package:flutter/cupertino.dart';
 
 class CloudinaryException implements Exception {
   final String message;
@@ -30,19 +31,16 @@ class CloudinaryService {
         ),
       );
 
-      // Append optimization parameters: q_auto (automatic quality) and f_auto (automatic format)
       final String secureUrl = response.secureUrl;
       
-      // Production Optimization: Insert q_auto,f_auto after /upload/
       if (secureUrl.contains('/upload/')) {
         return secureUrl.replaceFirst('/upload/', '/upload/q_auto,f_auto/');
       }
       
       return secureUrl;
-    } on CloudinaryException {
-      rethrow;
     } catch (e) {
-      throw CloudinaryException("An error occurred while uploading image: ${e.toString()}");
+      debugPrint("Cloudinary Upload Error Details: $e");
+      throw CloudinaryException("Upload failed: ${e.toString()}");
     }
   }
 }

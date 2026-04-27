@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../Boys/Providers/boys_provider.dart';
@@ -48,7 +49,6 @@ class _ManagerBottomState extends State<ManagerBottom> {
   }
 
   void _showForceUpdatePopup() {
-
     BoysProvider boysProvider = Provider.of<BoysProvider>(context, listen: false);
     boysProvider.getAppVersion();
     boysProvider.reOpenGM();
@@ -56,8 +56,8 @@ class _ManagerBottomState extends State<ManagerBottom> {
       context: context,
       barrierDismissible: false, // ❌ Not closable
       builder: (context) {
-        return WillPopScope( // ❌ Back button disabled
-          onWillPop: () async => false,
+        return PopScope(
+          canPop: false, // ❌ Back button disabled
           child: AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -66,9 +66,13 @@ class _ManagerBottomState extends State<ManagerBottom> {
               "Update Required",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            content: const Text(
-              "A new version of the app is available.\n\nPlease update to continue.",
-              style: TextStyle(fontSize: 15),
+            content: Consumer<BoysProvider>(
+              builder: (context, provider, child) {
+                return Text(
+                  "A new version of the app is available (Current: ${provider.currentVersion}+${provider.buildNumber}).\n\nPlease update to continue.",
+                  style: const TextStyle(fontSize: 15),
+                );
+              },
             ),
             actions: [
               ElevatedButton(
@@ -77,15 +81,17 @@ class _ManagerBottomState extends State<ManagerBottom> {
                   minimumSize: const Size(double.infinity, 45),
                 ),
                 onPressed: () async {
-                  const playStoreUrl =
-                      "https://play.google.com/store/apps/details?id=com.yourapp.package";
+                  final pkg = boysProvider.packageName ?? "com.evento.manager";
+                  String url = Platform.isAndroid
+                      ? "https://play.google.com/store/apps/details?id=$pkg"
+                      : "https://apps.apple.com/app/idYOUR_APP_ID"; // Replace with your iOS App ID
 
-                  if (await canLaunchUrl(Uri.parse(playStoreUrl))) {
-                    await launchUrl(Uri.parse(playStoreUrl),
+                  if (await canLaunchUrl(Uri.parse(url))) {
+                    await launchUrl(Uri.parse(url),
                         mode: LaunchMode.externalApplication);
                   }
                 },
-                child: const Text("UPDATE"),
+                child: const Text("UPDATE", style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

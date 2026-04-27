@@ -49,8 +49,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     LoginProvider loginProvider = Provider.of<LoginProvider>(context, listen: false);
     BoysProvider boysProvider = Provider.of<BoysProvider>(context, listen: false);
 
-    await boysProvider.getAppVersion();
-    await boysProvider.LockAppCheckFisrt();
+    // await boysProvider.getAppVersion();
+    // await boysProvider.lockAppCheckFirst();
 
     // Small delay to ensure the splash is visible before navigating
     Timer(const Duration(seconds: 3), () {
